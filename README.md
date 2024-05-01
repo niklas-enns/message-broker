@@ -3,7 +3,8 @@ For better understanding how message brokers work, I'm building my own one 🦫.
 
 
 ## Feature Backlog
-- [ ] message queueing
+- [ ] in-memory message queueing
+- [ ] persistent πqueueing
 - [x] multiple topics
 - [ ] cleanup on disconnect
 - [x] 1:n message delivery
