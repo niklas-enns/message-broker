@@ -6,43 +6,38 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Broker {
-    private Set<Socket> socketSet = new HashSet<>();
     private Subscriptions subscriptions = new Subscriptions();
 
     public void run(final int port) throws IOException {
-        System.out.println("niklase.broker.Broker starting...");
+        System.out.println("Starting Message Broker ...");
         var serverSocketForClients = new ServerSocket(port);
 
         while (true) {
             try {
                 var accept = serverSocketForClients.accept();
                 startNewHandler(accept);
-                socketSet.add(accept);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    private void startNewHandler(final Socket messageSender) {
+    private void startNewHandler(final Socket socketWithClient) {
         Thread.ofVirtual().start(() -> {
             try {
-                var bufferedReaderFromProducer =
-                        new BufferedReader(new InputStreamReader(messageSender.getInputStream()));
+                var bufferedReaderFromClient =
+                        new BufferedReader(new InputStreamReader(socketWithClient.getInputStream()));
                 while (true) {
-                    var line = bufferedReaderFromProducer.readLine();
+                    var line = bufferedReaderFromClient.readLine();
                     System.out.println("<<< broker got " + line);
                     var parts = line.split(",");
                     var messageType = parts[0];
                     var topic = parts[1];
                     switch (messageType) {
                     case "SUB_REQ":
-                        subscriptions.add(topic, messageSender);
-                        //TODO respond with OK
+                        subscriptions.add(topic, socketWithClient);
                         break;
                     case "MESSAGE":
                         var payload = parts[2];
@@ -61,11 +56,11 @@ public class Broker {
 
     private void publish(final String topic, final String line) {
         subscriptions.byTopic(topic)
-                .forEach(s -> {
+                .forEach(subscription -> {
                     try {
-                        new PrintStream(s.getOutputStream(), true).println(line);
+                        new PrintStream(subscription.getOutputStream(), true).println(line);
                         System.out.println(
-                                "<<< >>> broker forwarded " + line + " to " + s.getPort());
+                                "<<< >>> broker forwarded " + line + " to " + subscription.getPort());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
