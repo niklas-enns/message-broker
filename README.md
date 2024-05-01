@@ -1,4 +1,5 @@
 # Message Broker
+For better understanding how message brokers work, I'm building my own one 🦫.
 
 
 ## Feature Backlog
