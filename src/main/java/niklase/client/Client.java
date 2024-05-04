@@ -25,7 +25,7 @@ public class Client {
         logger.info("{} is connecting to port {}", this.name, port);
         socketToBroker = new Socket();
         socketToBroker.connect(new InetSocketAddress("localhost", port), 10*1000);
-        logger.info("client {} connected via socket {}", this.name, socketToBroker.getLocalPort());
+        logger.info("{} connected via socket {}", this.name, socketToBroker.getLocalPort());
         shovel();
     }
 
@@ -35,7 +35,7 @@ public class Client {
             while (!socketToBroker.isClosed()) {
                 try {
                     String line = bufferedReader.readLine();
-                    logger.info("<<< client {} read line: {}", name, line);
+                    logger.info("<<< client {} RAW {}", name, line);
                     var parts = line.split(",");
                     switch (parts[0]) {
                     case "SUB_RESP_OK":

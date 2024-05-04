@@ -43,7 +43,7 @@ public class Broker {
                         socketWithClient.close();
                         continue;
                     }
-                    logger.info("<<< broker got {}", line);
+                    logger.info("<<< RAW {}", line);
                     var parts = line.split(",");
                     var messageType = parts[0];
                     var topic = parts[1];
@@ -69,12 +69,13 @@ public class Broker {
 
     }
 
-    private void publish(final String topic, final String line) {
+    private void publish(final String topic, final String message) {
         subscriptions.byTopic(topic)
                 .forEach(subscription -> {
                     try {
-                        new PrintStream(subscription.getOutputStream(), true).println("MESSAGE,"+topic+","+line);
-                        logger.info("<<< >>> broker forwarded {} to {}", line, subscription.getPort());
+                        var envelope = "MESSAGE," + topic + "," + message;
+                        new PrintStream(subscription.getOutputStream(), true).println(envelope);
+                        logger.info("<<< >>> broker forwarded {} to {}", envelope, subscription.getPort());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
