@@ -17,7 +17,7 @@ public class Broker {
     private Subscriptions subscriptions = new Subscriptions();
 
     public void run(final int port) throws IOException {
-        logger.info("Starting Message Broker ...");
+        logger.info("Starting Message Broker on port {}", port);
         try (var serverSocketForClients = new ServerSocket(port)) {
 
             while (true) {
@@ -45,6 +45,10 @@ public class Broker {
                     }
                     logger.info("<<< RAW {}", line);
                     var parts = line.split(",");
+                    if (parts.length == 1) {
+                        logger.info("Unsupported message: {}", line);
+                        continue;
+                    }
                     var messageType = parts[0];
                     var topic = parts[1];
                     switch (messageType) {
