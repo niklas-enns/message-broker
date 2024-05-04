@@ -52,4 +52,8 @@ public class Client {
     public void subscribe(final String topic) throws IOException {
         socketToBroker.getOutputStream().write(("SUB_REQ,"+ topic + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
     }
+
+    public void closeSocket() throws IOException {
+        this.socketToBroker.close();
+    }
 }

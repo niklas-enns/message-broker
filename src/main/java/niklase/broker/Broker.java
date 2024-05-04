@@ -12,14 +12,15 @@ public class Broker {
 
     public void run(final int port) throws IOException {
         System.out.println("Starting Message Broker ...");
-        var serverSocketForClients = new ServerSocket(port);
+        try (var serverSocketForClients = new ServerSocket(port)) {
 
-        while (true) {
-            try {
-                var accept = serverSocketForClients.accept();
-                startNewHandler(accept);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            while (true) {
+                try {
+                    var accept = serverSocketForClients.accept();
+                    startNewHandler(accept);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
@@ -29,8 +30,13 @@ public class Broker {
             try {
                 var bufferedReaderFromClient =
                         new BufferedReader(new InputStreamReader(socketWithClient.getInputStream()));
-                while (true) {
+                while (!socketWithClient.isClosed()) {
                     var line = bufferedReaderFromClient.readLine();
+                    if (line == null) {
+                        subscriptions.removeAllFromSocket(socketWithClient);
+                        socketWithClient.close();
+                        continue;
+                    }
                     System.out.println("<<< broker got " + line);
                     var parts = line.split(",");
                     var messageType = parts[0];
@@ -47,6 +53,7 @@ public class Broker {
                         System.out.println("Unsupported message: " + line);
                     }
                 }
+                System.out.println("Stopping shoveling, because socket is closed: " + socketWithClient.isClosed());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

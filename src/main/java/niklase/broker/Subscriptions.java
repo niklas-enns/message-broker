@@ -23,4 +23,13 @@ public class Subscriptions {
         var sockets = subscriptions.get(topic);
         return sockets == null ? new HashSet<>() : sockets;
     }
+
+    public void removeAllFromSocket(final Socket socketWithClient) {
+        subscriptions.forEach((topic, sockets) -> {
+            var removed = sockets.remove(socketWithClient);
+            if (removed) {
+                System.out.println("Unsubscribed client "+ socketWithClient.getPort() + " from " + topic);
+            }
+        });
+    }
 }

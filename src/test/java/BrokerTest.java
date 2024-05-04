@@ -51,6 +51,15 @@ class BrokerTest {
     }
 
     @Test
+    @DisplayName("2 clients, 1 message but receiver disappears")
+    void testDisappearingClient() throws IOException, InterruptedException {
+        client2.subscribe("topic1");
+        client2.closeSocket();
+        Thread.sleep(100);
+        client1.publish("topic1", "My string data");
+    }
+
+    @Test
     @DisplayName("2 clients, 2 messages")
     void test2() throws IOException, InterruptedException {
         client1.subscribe("topic1");
