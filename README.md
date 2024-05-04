@@ -3,11 +3,11 @@ For better understanding how message brokers work, I'm building my own one 🦫.
 
 
 ## Feature Backlog
-- [ ] Introduce Logging Library
+- [x] Introduce Logging Library
 - [ ] in-memory message queueing
-- [ ] persistent πqueueing
+- [ ] persistent queueing
 - [x] multiple topics
-- [ ] cleanup on disconnect
+- [x] cleanup on disconnect
 - [x] 1:n message delivery
 - [ ] HA (but connect to any instance)
   - incoming messages have to be distributed to all nodes
