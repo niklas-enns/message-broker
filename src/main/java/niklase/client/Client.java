@@ -46,9 +46,11 @@ public class Client {
 
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    logger.info("Shoveling stopped, because", e);
+                    break;
                 }
             }
+            logger.info("Stopping shoveling, because socket is closed");
         });
     }
 
@@ -77,6 +79,7 @@ public class Client {
     }
 
     public void closeSocket() throws IOException {
+        logger.info("Closing Socket");
         this.socketToBroker.close();
     }
 }

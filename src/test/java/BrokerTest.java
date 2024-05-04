@@ -21,8 +21,8 @@ class BrokerTest {
         Thread.ofVirtual().start(() -> {
             try {
                 broker.run(PORT);
-            } catch (IOException e) {
-
+            } catch (Exception e) {
+                System.out.println("FATAL, BROKER DIED!");
             }
         });
         Thread.sleep(200);

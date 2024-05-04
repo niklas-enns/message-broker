@@ -19,7 +19,6 @@ public class Broker {
     public void run(final int port) throws IOException {
         logger.info("Starting Message Broker on port {}", port);
         try (var serverSocketForClients = new ServerSocket(port)) {
-
             while (true) {
                 try {
                     var accept = serverSocketForClients.accept();
@@ -38,12 +37,10 @@ public class Broker {
                         new BufferedReader(new InputStreamReader(socketWithClient.getInputStream()));
                 while (!socketWithClient.isClosed()) {
                     var line = bufferedReaderFromClient.readLine();
-                    if (line == null) {
-                        subscriptions.removeAllFromSocket(socketWithClient);
-                        socketWithClient.close();
-                        continue;
-                    }
                     logger.info("<<< RAW {}", line);
+                    if (line == null) {
+                        throw new EndOfStreamException("End of stream from client " + socketWithClient.getPort());
+                    }
                     var parts = line.split(",");
                     if (parts.length == 1) {
                         logger.info("Unsupported message: {}", line);
@@ -66,13 +63,13 @@ public class Broker {
                     }
                 }
                 logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
-            } catch (IOException e) {
-                subscriptions.removeAllFromSocket(socketWithClient);
+            } catch (IOException | EndOfStreamException e) {
+                subscriptions.removeAllOfSocket(socketWithClient);
                 try {
                     socketWithClient.close();
                 } catch (IOException ex) {
                 }
-                throw new RuntimeException(e);
+                logger.info("Handler for " + socketWithClient.getPort() + " stopped, because", e);
             }
         });
 
@@ -80,11 +77,11 @@ public class Broker {
 
     private void publish(final String topic, final String message) {
         subscriptions.byTopic(topic)
-                .forEach(subscription -> {
+                .forEach(socket -> {
                     try {
                         var envelope = "MESSAGE," + topic + "," + message;
-                        new PrintStream(subscription.getOutputStream(), true).println(envelope);
-                        logger.info("<<< >>> broker forwarded {} to {}", envelope, subscription.getPort());
+                        new PrintStream(socket.getOutputStream(), true).println(envelope);
+                        logger.info("<<< >>> broker forwarded {} to {}", envelope, socket.getPort());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

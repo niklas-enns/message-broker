@@ -5,7 +5,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Subscriptions {
+    private static final Logger logger = LoggerFactory.getLogger(Subscriptions.class);
     private final HashMap<String, Set<Socket>> subscriptions = new HashMap<>();
 
     void add(String topic, Socket socket) {
@@ -24,11 +28,11 @@ public class Subscriptions {
         return sockets == null ? new HashSet<>() : sockets;
     }
 
-    public void removeAllFromSocket(final Socket socketWithClient) {
+    public void removeAllOfSocket(final Socket socketWithClient) {
         subscriptions.forEach((topic, sockets) -> {
             var removed = sockets.remove(socketWithClient);
             if (removed) {
-                System.out.println("Unsubscribed client "+ socketWithClient.getPort() + " from " + topic);
+                logger.info("Unsubscribed client {} from {}", socketWithClient.getPort(), topic);
             }
         });
     }
