@@ -32,7 +32,7 @@ public class Client {
     void shovel() throws IOException {
         var bufferedReader = new BufferedReader(new InputStreamReader(socketToBroker.getInputStream()));
         Thread.ofVirtual().start(() -> {
-            while (true) {
+            while (!socketToBroker.isClosed()) {
                 try {
                     String line = bufferedReader.readLine();
                     logger.info("<<< client {} read line: {}", name, line);
@@ -48,6 +48,7 @@ public class Client {
 
                     }
                 } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         });
