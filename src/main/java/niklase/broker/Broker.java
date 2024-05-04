@@ -67,6 +67,11 @@ public class Broker {
                 }
                 logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
             } catch (IOException e) {
+                subscriptions.removeAllFromSocket(socketWithClient);
+                try {
+                    socketWithClient.close();
+                } catch (IOException ex) {
+                }
                 throw new RuntimeException(e);
             }
         });
