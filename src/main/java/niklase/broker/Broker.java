@@ -6,12 +6,18 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Broker {
+    private static final Logger logger = LoggerFactory.getLogger(Broker.class);
+
     private Subscriptions subscriptions = new Subscriptions();
 
     public void run(final int port) throws IOException {
-        System.out.println("Starting Message Broker ...");
+        logger.info("Starting Message Broker ...");
         try (var serverSocketForClients = new ServerSocket(port)) {
 
             while (true) {
@@ -37,23 +43,25 @@ public class Broker {
                         socketWithClient.close();
                         continue;
                     }
-                    System.out.println("<<< broker got " + line);
+                    logger.info("<<< broker got {}", line);
                     var parts = line.split(",");
                     var messageType = parts[0];
                     var topic = parts[1];
                     switch (messageType) {
                     case "SUB_REQ":
                         subscriptions.add(topic, socketWithClient);
+                        socketWithClient.getOutputStream().write(("SUB_RESP_OK,"+topic +  System.lineSeparator()).getBytes(
+                                StandardCharsets.UTF_8));
                         break;
                     case "MESSAGE":
                         var payload = parts[2];
                         publish(topic, payload);
                         break;
                     default:
-                        System.out.println("Unsupported message: " + line);
+                        logger.info("Unsupported message: {}", line);
                     }
                 }
-                System.out.println("Stopping shoveling, because socket is closed: " + socketWithClient.isClosed());
+                logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -65,9 +73,8 @@ public class Broker {
         subscriptions.byTopic(topic)
                 .forEach(subscription -> {
                     try {
-                        new PrintStream(subscription.getOutputStream(), true).println(line);
-                        System.out.println(
-                                "<<< >>> broker forwarded " + line + " to " + subscription.getPort());
+                        new PrintStream(subscription.getOutputStream(), true).println("MESSAGE,"+topic+","+line);
+                        logger.info("<<< >>> broker forwarded {} to {}", line, subscription.getPort());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

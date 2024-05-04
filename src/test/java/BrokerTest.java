@@ -16,7 +16,7 @@ class BrokerTest {
     private Client client2;
 
     @BeforeEach
-    void beforeEach() throws IOException {
+    void beforeEach() throws IOException, InterruptedException {
         broker = new Broker();
         Thread.ofVirtual().start(() -> {
             try {
@@ -25,6 +25,7 @@ class BrokerTest {
 
             }
         });
+        Thread.sleep(200);
 
         client1 = new Client(PORT, "C1");
         client2 = new Client(PORT, "C2");
@@ -36,7 +37,7 @@ class BrokerTest {
         client1.publish("topic1", "My string data");
 
         Thread.sleep(100);
-        assertTrue(client2.getConsumedMessages().isEmpty());
+        assertTrue(client2.getConsumedMessages("x").isEmpty());
     }
 
     @Test
@@ -47,7 +48,7 @@ class BrokerTest {
         client1.publish("topic1", "My string data");
 
         Thread.sleep(100);
-        assertEquals("My string data", client2.getConsumedMessages().get(0));
+        assertEquals("My string data", client2.getConsumedMessages("topic1").get(0));
     }
 
     @Test
@@ -70,8 +71,8 @@ class BrokerTest {
         client2.publish("topic1", "Hello from C2");
 
         Thread.sleep(100);
-        assertTrue(client1.getConsumedMessages().contains("Hello from C2"));
-        assertTrue(client2.getConsumedMessages().contains("Hello from C1"));
+        assertTrue(client1.getConsumedMessages("topic1").contains("Hello from C2"));
+        assertTrue(client2.getConsumedMessages("topic1").contains("Hello from C1"));
     }
 
     @Test
@@ -86,8 +87,8 @@ class BrokerTest {
         client1.publish("topic1", "My string data");
         Thread.sleep(100);
 
-        assertEquals("My string data", client2.getConsumedMessages().get(0));
-        assertEquals("My string data", client3.getConsumedMessages().get(0));
+        assertEquals("My string data", client2.getConsumedMessages("topic1").get(0));
+        assertEquals("My string data", client3.getConsumedMessages("topic1").get(0));
     }
 
     @Test
@@ -104,11 +105,11 @@ class BrokerTest {
 
         Thread.sleep(10);
 
-        assertTrue(client2.getConsumedMessages().contains("Hello from C1"));
-        assertTrue(client3.getConsumedMessages().contains("Hello from C1"));
+        assertTrue(client2.getConsumedMessages("topic1").contains("Hello from C1"));
+        assertTrue(client3.getConsumedMessages("topic1").contains("Hello from C1"));
 
-        assertTrue(client1.getConsumedMessages().contains("Hello from C2"));
-        assertTrue(client3.getConsumedMessages().contains("Hello from C2"));
+        assertTrue(client1.getConsumedMessages("topic1").contains("Hello from C2"));
+        assertTrue(client3.getConsumedMessages("topic1").contains("Hello from C2"));
     }
 
     @Test
@@ -117,10 +118,12 @@ class BrokerTest {
         client2.subscribe("topic1");
         Thread.sleep(10);
         client1.publish("topic1", "messag");
-        client1.publish("topic2", "messagee");
+        client1.publish("topic2", "messagee"); //client2 is not subscribed
 
         Thread.sleep(10);
-        assertTrue(client1.getConsumedMessages().isEmpty());
-        assertTrue(client2.getConsumedMessages().contains("messag"));
+        assertTrue(client1.getConsumedMessages("topic1").isEmpty());
+        assertTrue(client2.getConsumedMessages("topic1").contains("messag"));
+        assertTrue(client2.getConsumedMessages("topic2").isEmpty());
     }
+
 }
