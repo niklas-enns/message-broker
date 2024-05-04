@@ -13,19 +13,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Client {
-    private static final Logger logger = LoggerFactory.getLogger(Client.class);
-
+    private Logger logger;
     private final Socket socketToBroker;
-    private final String name;
     private final MessageStore consumedMessages = new MessageStore();
     private final List<String> subscribedTopics = new LinkedList<>();
 
     public Client(final int port, String name) throws IOException {
-        this.name = name;
-        logger.info("{} is connecting to port {}", this.name, port);
+        this.logger = LoggerFactory.getLogger("Client " + name);
+        logger.info("connecting to port {}", port);
         socketToBroker = new Socket();
-        socketToBroker.connect(new InetSocketAddress("localhost", port), 10*1000);
-        logger.info("{} connected via socket {}", this.name, socketToBroker.getLocalPort());
+        socketToBroker.connect(new InetSocketAddress("localhost", port), 10 * 1000);
+        logger.info("connected via socket {}", socketToBroker.getLocalPort());
         shovel();
     }
 
@@ -35,7 +33,7 @@ public class Client {
             while (!socketToBroker.isClosed()) {
                 try {
                     String line = bufferedReader.readLine();
-                    logger.info("<<< client {} RAW {}", name, line);
+                    logger.info("<<< RAW {}", line);
                     var parts = line.split(",");
                     switch (parts[0]) {
                     case "SUB_RESP_OK":
@@ -70,7 +68,8 @@ public class Client {
     }
 
     public void subscribe(final String topic) throws IOException, InterruptedException {
-        socketToBroker.getOutputStream().write(("SUB_REQ,"+ topic + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
+        socketToBroker.getOutputStream()
+                .write(("SUB_REQ," + topic + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
         logger.info("Sent SUB_REQ to broker, waiting for OK");
         while (!subscribedTopics.contains(topic)) {
             Thread.sleep(10);
