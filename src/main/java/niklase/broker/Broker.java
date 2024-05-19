@@ -3,6 +3,7 @@ package niklase.broker;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -51,8 +52,7 @@ public class Broker {
                     switch (messageType) {
                     case "SUB_REQ":
                         subscriptions.add(secondPart, clientName, socketWithClient);
-                        socketWithClient.getOutputStream().write(("SUB_RESP_OK,"+secondPart +  System.lineSeparator()).getBytes(
-                                StandardCharsets.UTF_8));
+                        new PrintStream(socketWithClient.getOutputStream(), true).println("SUB_RESP_OK,"+secondPart);
                         break;
                     case "MESSAGE":
                         var payload = parts[2];

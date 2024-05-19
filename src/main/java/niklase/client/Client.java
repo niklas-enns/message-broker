@@ -3,6 +3,7 @@ package niklase.client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -85,7 +86,7 @@ public class Client {
     }
 
     private void send(final String text) throws IOException {
-        socketToBroker.getOutputStream().write((text + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
+        new PrintStream(this.socketToBroker.getOutputStream(), true).println(text);
     }
 
     public void closeSocket() throws IOException {
