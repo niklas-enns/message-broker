@@ -13,18 +13,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Client {
+    private final String name;
     private Logger logger;
-    private final Socket socketToBroker;
+    private Socket socketToBroker;
     private final MessageStore consumedMessages = new MessageStore();
     private final List<String> subscribedTopics = new LinkedList<>();
 
     public Client(final int port, String name) throws IOException {
-        this.logger = LoggerFactory.getLogger("Client " + name);
-        logger.info("connecting to port {}", port);
-        socketToBroker = new Socket();
-        socketToBroker.connect(new InetSocketAddress("localhost", port), 10 * 1000);
-        logger.info("connected via socket {}", socketToBroker.getLocalPort());
+        this.name = name;
+        this.logger = LoggerFactory.getLogger("Client " + this.name);
+        connect(port);
         shovel();
+
+    }
+
+    public void connect(final int port) throws IOException {
+        logger.info("connecting to port {}", port);
+        this.socketToBroker = new Socket();
+        this.socketToBroker.connect(new InetSocketAddress("localhost", port), 10 * 1000);
+        logger.info("connected via socket {}", this.socketToBroker.getLocalPort());
+        send("HI_MY_NAME_IS," + this.name);
     }
 
     void shovel() throws IOException {
@@ -56,8 +64,7 @@ public class Client {
 
     public void publish(final String topicName, final String payload) throws IOException {
         var encodedMessage = encode(topicName, payload);
-        socketToBroker.getOutputStream()
-                .write((encodedMessage + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
+        send(encodedMessage);
         logger.info(">>> Sent {} to broker", encodedMessage);
     }
 
@@ -70,12 +77,15 @@ public class Client {
     }
 
     public void subscribe(final String topic) throws IOException, InterruptedException {
-        socketToBroker.getOutputStream()
-                .write(("SUB_REQ," + topic + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
+        send("SUB_REQ," + topic);
         logger.info("Sent SUB_REQ to broker, waiting for OK");
         while (!subscribedTopics.contains(topic)) {
             Thread.sleep(10);
         }
+    }
+
+    private void send(final String text) throws IOException {
+        socketToBroker.getOutputStream().write((text + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
     }
 
     public void closeSocket() throws IOException {

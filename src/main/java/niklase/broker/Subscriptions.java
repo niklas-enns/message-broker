@@ -1,5 +1,7 @@
 package niklase.broker;
 
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,30 +12,67 @@ import org.slf4j.LoggerFactory;
 
 public class Subscriptions {
     private static final Logger logger = LoggerFactory.getLogger(Subscriptions.class);
-    private final HashMap<String, Set<Socket>> subscriptions = new HashMap<>();
+    private final HashMap<String, Set<ClientProxy>> subscriptions = new HashMap<>();
 
-    void add(String topic, Socket socket) {
-        var sockets = subscriptions.get(topic);
-        if (sockets == null) {
-            var sockets1 = new HashSet<Socket>();
-            sockets1.add(socket);
-            subscriptions.put(topic, sockets1);
+    void add(String topic, final String clientName, Socket socket) {
+        var clientRefs = subscriptions.get(topic);
+        var newClientRef = new ClientProxy(clientName, socket);
+        if (clientRefs == null) {
+            var refs = new HashSet<ClientProxy>();
+            refs.add(newClientRef);
+            subscriptions.put(topic, refs);
         } else {
-            sockets.add(socket);
+            clientRefs.add(newClientRef);
         }
     }
 
-    public Set<Socket> byTopic(final String topic) {
-        var sockets = subscriptions.get(topic);
-        return sockets == null ? new HashSet<>() : sockets;
+    private Set<ClientProxy> byTopic(final String topic) {
+        var clientRefs = subscriptions.get(topic);
+        return clientRefs == null ? new HashSet<>() : clientRefs;
     }
 
-    public void removeAllOfSocket(final Socket socketWithClient) {
-        subscriptions.forEach((topic, sockets) -> {
-            var removed = sockets.remove(socketWithClient);
-            if (removed) {
-                logger.info("Unsubscribed client {} from {}", socketWithClient.getPort(), topic);
+    public void removeSocket(final Socket socketWithClient) {
+        subscriptions.forEach((topic, clientProxies) -> {
+            clientProxies.forEach(clientProxy -> {
+                if (clientProxy.socketToClient == socketWithClient) {
+                    clientProxy.socketToClient = null;
+                    logger.info("Removed socket from clientproxy {} but keeping subscription to topic {}", clientProxy.name,
+                            topic);
+                }
+            });
+
+        });
+    }
+
+    public void sendToTopic(final String topic, final String message) {
+        var envelope = "MESSAGE," + topic + "," + message;
+        byTopic(topic).forEach(clientProxy -> {
+            try {
+                clientProxy.send(envelope);
+            } catch (IOException e) {
+                logger.error("Failed to deliver message [{}] via topic [{}] to client [{}]", message, topic, clientProxy);
             }
         });
+
+    }
+
+    static class ClientProxy {
+        private String name;
+        private Socket socketToClient;
+
+        ClientProxy(String name, Socket socketToClient) {
+            this.name = name;
+            this.socketToClient = socketToClient;
+        }
+
+        public void send(final String envelope) throws IOException {
+            if (this.socketToClient != null) {
+                new PrintStream(this.socketToClient.getOutputStream(), true).println(envelope);
+                logger.info("<<< >>> forwarded [{}] to [{}]", envelope, this.name);
+            } else {
+                logger.info("could not forward [{}] to [{}], because there is no client connected", envelope, this.name);
+            }
+
+        }
     }
 }

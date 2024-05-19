@@ -6,6 +6,7 @@ import java.io.IOException;
 import niklase.broker.Broker;
 import niklase.client.Client;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,7 @@ class BrokerTest {
                 broker.run(PORT);
             } catch (Exception e) {
                 System.out.println("FATAL, BROKER DIED!");
+                e.printStackTrace();
             }
         });
         Thread.sleep(200);
@@ -124,6 +126,21 @@ class BrokerTest {
         assertTrue(client1.getConsumedMessages("topic1").isEmpty());
         assertTrue(client2.getConsumedMessages("topic1").contains("messag"));
         assertTrue(client2.getConsumedMessages("topic2").isEmpty());
+    }
+
+    @Test
+    @DisplayName("2 clients, 1 message, temporary disconnected")
+    @Disabled("Not implemented yet")
+    void test10() throws IOException, InterruptedException {
+        client2.subscribe("topic1");
+        client2.closeSocket();
+        Thread.sleep(100);
+        client1.publish("topic1", "My string data");
+        Thread.sleep(100);
+        client2.connect(PORT);
+
+        Thread.sleep(100);
+        assertEquals("My string data", client2.getConsumedMessages("topic1").get(0));
     }
 
 }

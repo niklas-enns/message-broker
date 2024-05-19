@@ -3,7 +3,6 @@ package niklase.broker;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +31,7 @@ public class Broker {
 
     private void startNewHandler(final Socket socketWithClient) {
         Thread.ofVirtual().start(() -> {
+            var clientName = "";
             try {
                 var bufferedReaderFromClient =
                         new BufferedReader(new InputStreamReader(socketWithClient.getInputStream()));
@@ -39,7 +39,7 @@ public class Broker {
                     var line = bufferedReaderFromClient.readLine();
                     logger.info("<<< RAW {}", line);
                     if (line == null) {
-                        throw new EndOfStreamException("End of stream from client " + socketWithClient.getPort());
+                        throw new EndOfStreamException("End of stream from client " + clientName);
                     }
                     var parts = line.split(",");
                     if (parts.length == 1) {
@@ -47,16 +47,19 @@ public class Broker {
                         continue;
                     }
                     var messageType = parts[0];
-                    var topic = parts[1];
+                    var secondPart = parts[1];
                     switch (messageType) {
                     case "SUB_REQ":
-                        subscriptions.add(topic, socketWithClient);
-                        socketWithClient.getOutputStream().write(("SUB_RESP_OK,"+topic +  System.lineSeparator()).getBytes(
+                        subscriptions.add(secondPart, clientName, socketWithClient);
+                        socketWithClient.getOutputStream().write(("SUB_RESP_OK,"+secondPart +  System.lineSeparator()).getBytes(
                                 StandardCharsets.UTF_8));
                         break;
                     case "MESSAGE":
                         var payload = parts[2];
-                        publish(topic, payload);
+                        publish(secondPart, payload);
+                        break;
+                    case "HI_MY_NAME_IS":
+                        clientName = secondPart;
                         break;
                     default:
                         logger.info("Unsupported message: {}", line);
@@ -64,27 +67,18 @@ public class Broker {
                 }
                 logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
             } catch (IOException | EndOfStreamException e) {
-                subscriptions.removeAllOfSocket(socketWithClient);
+                subscriptions.removeSocket(socketWithClient);
                 try {
                     socketWithClient.close();
                 } catch (IOException ex) {
                 }
-                logger.info("Handler for " + socketWithClient.getPort() + " stopped, because", e);
+                logger.info("Handler for {} stopped, because", clientName, e);
             }
         });
 
     }
 
     private void publish(final String topic, final String message) {
-        subscriptions.byTopic(topic)
-                .forEach(socket -> {
-                    try {
-                        var envelope = "MESSAGE," + topic + "," + message;
-                        new PrintStream(socket.getOutputStream(), true).println(envelope);
-                        logger.info("<<< >>> broker forwarded {} to {}", envelope, socket.getPort());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        subscriptions.sendToTopic(topic, message);
     }
 }
