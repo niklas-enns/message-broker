@@ -2,10 +2,8 @@
 This message broker can
 * distribute text-based messages between multiple clients
 * via separate topics
+* with tolerance for temporary connection interruptions to clients
 .
-
-Message _queueing_ is not implemented yet, so messages are only delivered to _connected_ clients.
-
 
 ## Feature Backlog
 - [x] Introduce logging Library
