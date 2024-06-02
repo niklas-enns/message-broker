@@ -14,7 +14,7 @@ Message _queueing_ is not implemented yet, so messages are only delivered to _co
 - [x] multiple topics
 - [x] cleanup on disconnect
 - [x] 1:n message delivery
-- [ ] in-memory message queueing
+- [x] in-memory message queueing
   - after connecting, clients will receive messages of their subscriptions that arrived while the clients were disconnected 
 - [ ] persistent queueing
   - during operation, the broker can be restarted and the processing continues without loss of messages

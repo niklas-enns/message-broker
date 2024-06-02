@@ -5,8 +5,8 @@ import java.io.IOException;
 
 import niklase.broker.Broker;
 import niklase.client.Client;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,15 +22,19 @@ class BrokerTest {
         Thread.ofVirtual().start(() -> {
             try {
                 broker.run(PORT);
-            } catch (Exception e) {
-                System.out.println("FATAL, BROKER DIED!");
-                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
         Thread.sleep(200);
 
         client1 = new Client(PORT, "C1");
         client2 = new Client(PORT, "C2");
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        broker.stop();
     }
 
     @Test
@@ -50,6 +54,7 @@ class BrokerTest {
         client1.publish("topic1", "My string data");
 
         Thread.sleep(100);
+        assertEquals(1, client2.getConsumedMessages("topic1").size());
         assertEquals("My string data", client2.getConsumedMessages("topic1").get(0));
     }
 
@@ -73,8 +78,14 @@ class BrokerTest {
         client2.publish("topic1", "Hello from C2");
 
         Thread.sleep(100);
+        assertEquals(2, client1.getConsumedMessages("topic1").size());
+        assertTrue(client1.getConsumedMessages("topic1").contains("Hello from C1"));
         assertTrue(client1.getConsumedMessages("topic1").contains("Hello from C2"));
+
+        assertEquals(2, client2.getConsumedMessages("topic1").size());
         assertTrue(client2.getConsumedMessages("topic1").contains("Hello from C1"));
+        assertTrue(client2.getConsumedMessages("topic1").contains("Hello from C2"));
+
     }
 
     @Test
@@ -89,7 +100,10 @@ class BrokerTest {
         client1.publish("topic1", "My string data");
         Thread.sleep(100);
 
+        assertEquals(1, client2.getConsumedMessages("topic1").size());
         assertEquals("My string data", client2.getConsumedMessages("topic1").get(0));
+
+        assertEquals(1, client3.getConsumedMessages("topic1").size());
         assertEquals("My string data", client3.getConsumedMessages("topic1").get(0));
     }
 
@@ -107,10 +121,16 @@ class BrokerTest {
 
         Thread.sleep(10);
 
-        assertTrue(client2.getConsumedMessages("topic1").contains("Hello from C1"));
-        assertTrue(client3.getConsumedMessages("topic1").contains("Hello from C1"));
-
+        assertEquals(2, client1.getConsumedMessages("topic1").size());
+        assertTrue(client1.getConsumedMessages("topic1").contains("Hello from C1"));
         assertTrue(client1.getConsumedMessages("topic1").contains("Hello from C2"));
+
+        assertEquals(2, client2.getConsumedMessages("topic1").size());
+        assertTrue(client2.getConsumedMessages("topic1").contains("Hello from C2"));
+        assertTrue(client2.getConsumedMessages("topic1").contains("Hello from C1"));
+
+        assertEquals(2, client3.getConsumedMessages("topic1").size());
+        assertTrue(client3.getConsumedMessages("topic1").contains("Hello from C1"));
         assertTrue(client3.getConsumedMessages("topic1").contains("Hello from C2"));
     }
 
@@ -124,23 +144,29 @@ class BrokerTest {
 
         Thread.sleep(10);
         assertTrue(client1.getConsumedMessages("topic1").isEmpty());
+
+        assertEquals(1, client2.getConsumedMessages("topic1").size());
         assertTrue(client2.getConsumedMessages("topic1").contains("messag"));
         assertTrue(client2.getConsumedMessages("topic2").isEmpty());
     }
 
     @Test
     @DisplayName("2 clients, 1 message, temporary disconnected")
-    @Disabled("Not implemented yet")
     void test10() throws IOException, InterruptedException {
         client2.subscribe("topic1");
         client2.closeSocket();
         Thread.sleep(100);
-        client1.publish("topic1", "My string data");
+        client1.publish("topic1", "My string data 1");
+        client1.publish("topic1", "My string data 2");
+        client1.publish("topic1", "My string data 3");
         Thread.sleep(100);
         client2.connect(PORT);
 
         Thread.sleep(100);
-        assertEquals("My string data", client2.getConsumedMessages("topic1").get(0));
+        assertEquals(3, client2.getConsumedMessages("topic1").size());
+        assertTrue(client2.getConsumedMessages("topic1").contains("My string data 1"));
+        assertTrue(client2.getConsumedMessages("topic1").contains("My string data 2"));
+        assertTrue(client2.getConsumedMessages("topic1").contains("My string data 3"));
     }
 
 }

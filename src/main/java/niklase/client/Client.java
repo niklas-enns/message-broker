@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 
+import niklase.broker.EndOfStreamException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +24,6 @@ public class Client {
         this.name = name;
         this.logger = LoggerFactory.getLogger("Client " + this.name);
         connect(port);
-        shovel();
-
     }
 
     public void connect(final int port) throws IOException {
@@ -33,6 +32,7 @@ public class Client {
         this.socketToBroker.connect(new InetSocketAddress("localhost", port), 10 * 1000);
         logger.info("connected via socket {}", this.socketToBroker.getLocalPort());
         send("HI_MY_NAME_IS," + this.name);
+        shovel();
     }
 
     void shovel() throws IOException {
@@ -41,6 +41,9 @@ public class Client {
             while (!socketToBroker.isClosed()) {
                 try {
                     String line = bufferedReader.readLine();
+                    if (line == null) {
+                        throw new EndOfStreamException("End of stream from server ");
+                    }
                     logger.info("<<< RAW {}", line);
                     var parts = line.split(",");
                     switch (parts[0]) {
@@ -53,9 +56,14 @@ public class Client {
                     default:
 
                     }
-                } catch (IOException e) {
+                } catch (IOException | EndOfStreamException e) {
                     logger.info("Shoveling stopped, because", e);
-                    break;
+                    try {
+                        this.socketToBroker.close();
+                    } catch (IOException ex) {
+                        logger.info("Unable to close socket to broker, because", e);
+                        break;
+                    }
                 }
             }
             logger.info("Stopping shoveling, because socket is closed");
