@@ -1,6 +1,4 @@
 # Message Broker
-For better understanding how message brokers work, I'm building my own one 🦫.
-
 This message broker can
 * distribute text-based messages between multiple clients
 * via separate topics
