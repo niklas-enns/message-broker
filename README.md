@@ -9,12 +9,12 @@ Message _queueing_ is not implemented yet, so messages are only delivered to _co
 
 ## Feature Backlog
 - [x] Introduce logging Library
-- [x] multiple topics
-- [x] cleanup on disconnect
+- [x] Multiple topics
+- [x] Cleanup on disconnect
 - [x] 1:n message delivery
-- [x] in-memory message queueing
-  - after connecting, clients will receive messages of their subscriptions that arrived while the clients were disconnected 
-- [ ] persistent queueing
-  - during operation, the broker can be restarted and the processing continues without loss of messages
+- [x] In-memory message queueing
+  - After connecting, clients will receive messages of their subscriptions that arrived while the clients were disconnected 
+- [ ] Persistent queueing
+  - During operation, the broker can be restarted and the processing continues without loss of messages
 - [ ] HA
-  - clients can connect to any instance and perform any operation
+  - Clients can connect to any instance and perform any operation
