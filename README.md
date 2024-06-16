@@ -14,6 +14,7 @@ This message broker can
   - After connecting, clients will receive messages of their subscriptions that arrived while the clients were disconnected 
 - [ ] Persistent queueing
   - During operation, the broker can be restarted and the processing continues without loss of messages
+- For load-balancing on the consumer side, clients can share subscriptions
 
 ## Quality Backlog
 - [ ] High Availability with Active Redundancy
