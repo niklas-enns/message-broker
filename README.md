@@ -14,5 +14,9 @@ This message broker can
   - After connecting, clients will receive messages of their subscriptions that arrived while the clients were disconnected 
 - [ ] Persistent queueing
   - During operation, the broker can be restarted and the processing continues without loss of messages
-- [ ] HA
-  - Clients can connect to any instance and perform any operation
+
+## Quality Backlog
+- [ ] High Availability with Active Redundancy
+  - [ ] Failures of single instances do not block the overall operation
+    - [ ] On failure, clients connect to any instance and continue
+      - [ ] Queues have to be replicated
