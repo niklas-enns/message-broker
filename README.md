@@ -20,4 +20,4 @@ This message broker can
 - [ ] High Availability with Active Redundancy
   - [ ] Failures of single instances do not block the overall operation
     - [ ] On failure, clients connect to any instance and continue
-      - [ ] Queues have to be replicated
+      - [ ] State (Queues + Subscriptions) have to be replicated
