@@ -7,7 +7,6 @@ This message broker can
 .
 
 ## Feature Backlog
-- [x] Introduce logging Library
 - [x] Multiple topics
 - [x] Cleanup on disconnect
 - [x] 1:n message delivery
@@ -19,6 +18,7 @@ This message broker can
 - [ ] cancel subscriptions 
 
 ## Quality Backlog
+- [x] Introduce logging Library
 - [ ] High Availability with Active Redundancy
   - [ ] Failures of single instances do not block the overall operation
     - [ ] On failure, clients connect to any instance and continue
