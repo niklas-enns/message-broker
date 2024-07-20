@@ -72,12 +72,13 @@ class BrokerTest {
     void test2() throws IOException, InterruptedException {
         client1.subscribe("topic1");
         client2.subscribe("topic1");
-        Thread.sleep(100);
 
         client1.publish("topic1", "Hello from C1");
         client2.publish("topic1", "Hello from C2");
 
         Thread.sleep(100);
+        broker.hook();
+
         assertEquals(2, client1.getConsumedMessages("topic1").size());
         assertTrue(client1.getConsumedMessages("topic1").contains("Hello from C1"));
         assertTrue(client1.getConsumedMessages("topic1").contains("Hello from C2"));
@@ -159,7 +160,7 @@ class BrokerTest {
         client1.publish("topic1", "My string data 1");
         client1.publish("topic1", "My string data 2");
         client1.publish("topic1", "My string data 3");
-        Thread.sleep(100);
+
         client2.connect(PORT);
 
         Thread.sleep(100);
@@ -167,6 +168,20 @@ class BrokerTest {
         assertTrue(client2.getConsumedMessages("topic1").contains("My string data 1"));
         assertTrue(client2.getConsumedMessages("topic1").contains("My string data 2"));
         assertTrue(client2.getConsumedMessages("topic1").contains("My string data 3"));
+    }
+
+    @Test
+    @DisplayName("Load-Balancing in consumer groups")
+    void test11() throws IOException, InterruptedException {
+        client2.subscribe("topic1", "group1");
+        client1.subscribe("topic1", "group1");
+        Thread.sleep(100);
+        for (int i = 0; i < 20; i++) {
+            client1.publish("topic1", "My string data");
+        }
+        Thread.sleep(100);
+        assertEquals(10,client1.getConsumedMessages("topic1").size());
+        assertEquals(10,client2.getConsumedMessages("topic1").size());
     }
 
 }

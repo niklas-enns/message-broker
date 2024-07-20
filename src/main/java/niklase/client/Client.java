@@ -90,6 +90,16 @@ public class Client {
         while (!subscribedTopics.contains(topic)) {
             Thread.sleep(10);
         }
+        logger.info("Got SUB_REQ from broker");
+    }
+
+    public void subscribe(final String topic, final String group) throws IOException, InterruptedException {
+        send("SUB_REQ," + topic + "," + group);
+        logger.info("Sent SUB_REQ to broker, waiting for OK");
+        while (!subscribedTopics.contains(topic)) {
+            Thread.sleep(10);
+        }
+        logger.info("Got SUB_REQ from broker");
     }
 
     private void send(final String text) throws IOException {

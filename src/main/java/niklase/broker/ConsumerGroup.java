@@ -1,0 +1,128 @@
+package niklase.broker;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.Socket;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ConsumerGroup {
+    private static final Logger logger = LoggerFactory.getLogger(ConsumerGroup.class);
+    private final String name;
+    private List<ClientProxy> clients = new LinkedList<>();
+    private ClientProxy current = null;
+
+    private List<String> messages = new LinkedList<>();
+
+    public ConsumerGroup(final String name) {
+        this.name = name;
+    }
+
+    public synchronized void add(final ClientProxy clientProxy) {
+        this.clients.add(clientProxy);
+    }
+
+    public synchronized void accept(final String envelope) {
+        messages.add(envelope);
+        this.flush();
+    }
+
+    private synchronized void flush() {
+        var clientProxy = getNextClientProxy();
+        if (clientProxy != null) {
+            var socketToClient = clientProxy.socketToClient();
+            try {
+                messages.removeIf(envelope -> {
+                    try {
+                        new PrintStream(socketToClient.getOutputStream(), true).println(envelope);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    logger.info("<<< >>> forwarded [{}] to [{}]", envelope, clientProxy.getName());
+                    return true;
+                });
+                logger.info("Flushing {} finished without Exceptions. {} message(s) are left", clientProxy.getName(),
+                        this.messages.size());
+            } catch (Exception e) {
+                try {
+                    socketToClient.close();
+                } catch (Exception ex) {
+                    logger.info("Unable to close socket on failed send operation");
+                } finally {
+                    clientProxy.clearSocketToClient();
+                }
+            }
+        } else {
+            logger.info("Unable to flush consumergroup {}, because there are no clients with socket", this.name);
+        }
+
+    }
+
+    private ClientProxy getNextClientProxy() {
+        if (current == null) {
+            if (!clients.isEmpty()) {
+                current = clients.get(0);
+            }
+            return current;
+        } else {
+            // 0 clients
+            if (clients.isEmpty()) {
+                return null;
+            }
+            // 1 client
+            if (clients.size() == 1) {
+                current = clients.get(0);
+                return current;
+            }
+            // current is at end of list, we have to jump back to index 0
+            if (clients.size() == clients.indexOf(current) + 1) {
+                current = clients.get(0);
+                return current;
+            }
+
+            // 1 subsequent client is available (current index =0), size = 2
+            if (clients.size() > clients.indexOf(current) + 1) {
+                current = clients.get(clients.indexOf(current)+1);
+                return current;
+            }
+            return current;
+        }
+    }
+
+    public void addSocket(final String clientName, final Socket socketWithClient) {
+        this.clients.stream()
+                .filter(clientProxy -> clientProxy.getName().equals(clientName))
+                .forEach(clientProxy -> clientProxy.setSocketToClient(socketWithClient));
+        this.flush();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ConsumerGroup that = (ConsumerGroup) o;
+        return Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name);
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public Collection<ClientProxy> getClientProxies() {
+        return this.clients;
+    }
+}

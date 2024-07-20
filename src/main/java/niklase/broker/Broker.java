@@ -7,6 +7,9 @@ import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +17,7 @@ import org.slf4j.LoggerFactory;
 public class Broker {
     private static final Logger logger = LoggerFactory.getLogger(Broker.class);
 
-    private Subscriptions subscriptions = new Subscriptions();
+    private Topics topics = new Topics();
     private ServerSocket serverSocketForClients = null;
 
     public void run(final int port) throws IOException {
@@ -51,19 +54,27 @@ public class Broker {
                         continue;
                     }
                     var messageType = parts[0];
-                    var secondPart = parts[1];
+                    var topic = parts[1];
                     switch (messageType) {
+                    case "HI_MY_NAME_IS":
+                        clientName = parts[1];
+                        final String finalClientName = clientName;
+                        getConsumerGroups().forEach(
+                                consumerGroup -> consumerGroup.addSocket(finalClientName, socketWithClient));
+                        break;
                     case "SUB_REQ":
-                        subscriptions.add(secondPart, clientName, socketWithClient);
-                        new PrintStream(socketWithClient.getOutputStream(), true).println("SUB_RESP_OK," + secondPart);
+                        var consumerGroupName = UUID.randomUUID().toString();
+                        if (parts.length == 3) {
+                            consumerGroupName = parts[2];
+                        }
+                        topics.subscribeConsumerGroupToTopic(topic, consumerGroupName);
+                        topics.getConsumerGroupByName(consumerGroupName)
+                                .add(new ClientProxy(clientName, socketWithClient));
+                        new PrintStream(socketWithClient.getOutputStream(), true).println("SUB_RESP_OK," + topic);
                         break;
                     case "MESSAGE":
                         var payload = parts[2];
-                        subscriptions.sendToTopic(secondPart, payload);
-                        break;
-                    case "HI_MY_NAME_IS":
-                        clientName = secondPart;
-                        subscriptions.addClient(clientName, socketWithClient);
+                        topics.accept(topic, payload);
                         break;
                     default:
                         logger.info("Unsupported message: {}", line);
@@ -71,7 +82,7 @@ public class Broker {
                 }
                 logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
             } catch (IOException | EndOfStreamException e) {
-                subscriptions.removeSocket(socketWithClient);
+                getClientProxiesByName(clientName).forEach(ClientProxy::clearSocketToClient);
                 try {
                     socketWithClient.close();
                 } catch (IOException ex) {
@@ -83,8 +94,24 @@ public class Broker {
 
     }
 
+    private Set<ConsumerGroup> getConsumerGroups() {
+        return topics.getAllConsumerGroups();
+    }
+
+    private Set<ClientProxy> getClientProxiesByName(final String clientName) {
+        return topics.getAllConsumerGroups().stream()
+                .flatMap(consumerGroup ->
+                        consumerGroup.getClientProxies().stream()
+                                .filter(clientProxy -> clientProxy.getName().equals(clientName)))
+                .collect(Collectors.toSet());
+    }
+
     public void stop() throws IOException {
         logger.info("Stopping broker....");
         this.serverSocketForClients.close();
+    }
+
+    public void hook() {
+        //for debugging purposes
     }
 }
