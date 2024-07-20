@@ -19,6 +19,7 @@ This message broker can
 
 ## Quality Backlog
 - [x] Introduce logging Library
+- [ ] Unit-Test ConsumerGroup.java
 - [ ] High Availability with Active Redundancy
   - [ ] Failures of single instances do not block the overall operation
     - [ ] On failure, clients connect to any instance and continue
