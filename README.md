@@ -3,6 +3,7 @@ This message broker can
 * distribute text-based messages between multiple clients
 * via separate topics
 * with tolerance for temporary connection interruptions to clients
+* with load balancing on consumer groups
 .
 
 ## Feature Backlog
