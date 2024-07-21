@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +59,7 @@ public class Broker {
                         clientName = parts[1];
                         final String finalClientName = clientName;
                         getConsumerGroups().forEach(
-                                consumerGroup -> consumerGroup.addSocket(finalClientName, socketWithClient));
+                                consumerGroup -> consumerGroup.setSocket(finalClientName, socketWithClient));
                         break;
                     case "SUB_REQ":
                         var consumerGroupName = UUID.randomUUID().toString();
@@ -82,7 +81,8 @@ public class Broker {
                 }
                 logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
             } catch (IOException | EndOfStreamException e) {
-                getClientProxiesByName(clientName).forEach(ClientProxy::clearSocketToClient);
+                final String finalClientName = clientName;
+                getConsumerGroups().forEach(consumerGroup -> consumerGroup.clearSocket(finalClientName, socketWithClient));
                 try {
                     socketWithClient.close();
                 } catch (IOException ex) {
@@ -96,14 +96,6 @@ public class Broker {
 
     private Set<ConsumerGroup> getConsumerGroups() {
         return topics.getAllConsumerGroups();
-    }
-
-    private Set<ClientProxy> getClientProxiesByName(final String clientName) {
-        return topics.getAllConsumerGroups().stream()
-                .flatMap(consumerGroup ->
-                        consumerGroup.getClientProxies().stream()
-                                .filter(clientProxy -> clientProxy.getName().equals(clientName)))
-                .collect(Collectors.toSet());
     }
 
     public void stop() throws IOException {

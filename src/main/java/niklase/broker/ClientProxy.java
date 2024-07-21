@@ -28,7 +28,9 @@ class ClientProxy {
         return this.socketToClient;
     }
 
-    public void clearSocketToClient() {
-        this.socketToClient = null;
+    public synchronized void clearSocketToClient(final Socket socket) {
+        if (socket.equals(this.socketToClient)) {
+            this.socketToClient = null;
+        }
     }
 }

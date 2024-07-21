@@ -38,6 +38,7 @@ public class Client {
     void shovel() throws IOException {
         var bufferedReader = new BufferedReader(new InputStreamReader(socketToBroker.getInputStream()));
         Thread.ofVirtual().start(() -> {
+            logger.info("Start shoveling...");
             while (!socketToBroker.isClosed()) {
                 try {
                     String line = bufferedReader.readLine();
@@ -58,12 +59,7 @@ public class Client {
                     }
                 } catch (IOException | EndOfStreamException e) {
                     logger.info("Shoveling stopped, because", e);
-                    try {
-                        this.socketToBroker.close();
-                    } catch (IOException ex) {
-                        logger.info("Unable to close socket to broker, because", e);
-                        break;
-                    }
+                    break;
                 }
             }
             logger.info("Stopping shoveling, because socket is closed");
@@ -90,7 +86,7 @@ public class Client {
         while (!subscribedTopics.contains(topic)) {
             Thread.sleep(10);
         }
-        logger.info("Got SUB_REQ from broker");
+        logger.info("Got SUB_RESP_OK from broker");
     }
 
     public void subscribe(final String topic, final String group) throws IOException, InterruptedException {
@@ -99,7 +95,7 @@ public class Client {
         while (!subscribedTopics.contains(topic)) {
             Thread.sleep(10);
         }
-        logger.info("Got SUB_REQ from broker");
+        logger.info("Got SUB_RESP_OK from broker");
     }
 
     private void send(final String text) throws IOException {
@@ -107,7 +103,11 @@ public class Client {
     }
 
     public void closeSocket() throws IOException {
-        logger.info("Closing Socket");
+        logger.info("Closing Socket {}", this.socketToBroker.getLocalPort());
         this.socketToBroker.close();
+    }
+
+    public void hook() {
+        // debugging
     }
 }

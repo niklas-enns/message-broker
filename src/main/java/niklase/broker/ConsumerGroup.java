@@ -3,7 +3,6 @@ package niklase.broker;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -32,8 +31,20 @@ public class ConsumerGroup {
         this.flush();
     }
 
+    public void setSocket(final String clientName, final Socket socketWithClient) {
+        this.clients.stream()
+                .filter(clientProxy -> clientProxy.getName().equals(clientName))
+                .forEach(clientProxy -> clientProxy.setSocketToClient(socketWithClient));
+        this.flush();
+    }
+
+    public void clearSocket(final String clientName, final Socket socket) {
+        this.clients.stream()
+                .forEach(clientProxy -> clientProxy.clearSocketToClient(socket));
+    }
+
     private synchronized void flush() {
-        var clientProxy = getNextClientProxy();
+        var clientProxy = getNextClientProxyWithSocket();
         if (clientProxy != null) {
             var socketToClient = clientProxy.socketToClient();
             try {
@@ -43,7 +54,7 @@ public class ConsumerGroup {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    logger.info("<<< >>> forwarded [{}] to [{}]", envelope, clientProxy.getName());
+                    logger.info("<<< >>> forwarded [{}] to [{}@{}]", envelope, clientProxy.getName(), clientProxy.socketToClient().getPort());
                     return true;
                 });
                 logger.info("Flushing {} finished without Exceptions. {} message(s) are left", clientProxy.getName(),
@@ -51,10 +62,12 @@ public class ConsumerGroup {
             } catch (Exception e) {
                 try {
                     socketToClient.close();
+                } catch (NullPointerException ex) {
+                    logger.info("Unable to close socket on failed send operation, because socket has been nullified meanwhile");
                 } catch (Exception ex) {
                     logger.info("Unable to close socket on failed send operation");
                 } finally {
-                    clientProxy.clearSocketToClient();
+                    clientProxy.clearSocketToClient(socketToClient);
                 }
             }
         } else {
@@ -63,42 +76,36 @@ public class ConsumerGroup {
 
     }
 
-    private ClientProxy getNextClientProxy() {
+    private ClientProxy getNextClientProxyWithSocket() {
+        var connectedClients = this.clients.stream().filter(clientProxy -> clientProxy.socketToClient() != null).toList();
         if (current == null) {
-            if (!clients.isEmpty()) {
-                current = clients.get(0);
+            if (!connectedClients.isEmpty()) {
+                current = connectedClients.get(0);
             }
             return current;
         } else {
             // 0 clients
-            if (clients.isEmpty()) {
+            if (connectedClients.isEmpty()) {
                 return null;
             }
             // 1 client
-            if (clients.size() == 1) {
-                current = clients.get(0);
+            if (connectedClients.size() == 1) {
+                current = connectedClients.get(0);
                 return current;
             }
             // current is at end of list, we have to jump back to index 0
-            if (clients.size() == clients.indexOf(current) + 1) {
-                current = clients.get(0);
+            if (connectedClients.size() == connectedClients.indexOf(current) + 1) {
+                current = connectedClients.get(0);
                 return current;
             }
 
             // 1 subsequent client is available (current index =0), size = 2
-            if (clients.size() > clients.indexOf(current) + 1) {
-                current = clients.get(clients.indexOf(current)+1);
+            if (connectedClients.size() > connectedClients.indexOf(current) + 1) {
+                current = connectedClients.get(connectedClients.indexOf(current) + 1);
                 return current;
             }
             return current;
         }
-    }
-
-    public void addSocket(final String clientName, final Socket socketWithClient) {
-        this.clients.stream()
-                .filter(clientProxy -> clientProxy.getName().equals(clientName))
-                .forEach(clientProxy -> clientProxy.setSocketToClient(socketWithClient));
-        this.flush();
     }
 
     @Override
@@ -120,9 +127,5 @@ public class ConsumerGroup {
 
     public String getName() {
         return this.name;
-    }
-
-    public Collection<ClientProxy> getClientProxies() {
-        return this.clients;
     }
 }

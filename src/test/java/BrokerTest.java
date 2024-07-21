@@ -156,7 +156,11 @@ class BrokerTest {
     void test10() throws IOException, InterruptedException {
         client2.subscribe("topic1");
         client2.closeSocket();
+        // it is possible that broker will be able to push out the first message to the old socket.
+        // As the socket is already closed on the client, the client won't see that data.
+        // Currently, we have no consumer ACKs, so the message will not reach the client
         Thread.sleep(100);
+
         client1.publish("topic1", "My string data 1");
         client1.publish("topic1", "My string data 2");
         client1.publish("topic1", "My string data 3");
