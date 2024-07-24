@@ -54,7 +54,8 @@ public class ConsumerGroup {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    logger.info("<<< >>> forwarded [{}] to [{}@{}]", envelope, clientProxy.getName(), clientProxy.socketToClient().getPort());
+                    logger.info("<<< >>> forwarded [{}] to [{}@{}]", envelope, clientProxy.getName(),
+                            clientProxy.socketToClient().getPort());
                     return true;
                 });
                 logger.info("Flushing {} finished without Exceptions. {} message(s) are left", clientProxy.getName(),
@@ -63,7 +64,8 @@ public class ConsumerGroup {
                 try {
                     socketToClient.close();
                 } catch (NullPointerException ex) {
-                    logger.info("Unable to close socket on failed send operation, because socket has been nullified meanwhile");
+                    logger.info(
+                            "Unable to close socket on failed send operation, because socket has been nullified meanwhile");
                 } catch (Exception ex) {
                     logger.info("Unable to close socket on failed send operation");
                 } finally {
@@ -76,18 +78,18 @@ public class ConsumerGroup {
 
     }
 
-    private ClientProxy getNextClientProxyWithSocket() {
-        var connectedClients = this.clients.stream().filter(clientProxy -> clientProxy.socketToClient() != null).toList();
+    protected ClientProxy getNextClientProxyWithSocket() {
+        var connectedClients =
+                this.clients.stream().filter(clientProxy -> clientProxy.socketToClient() != null).toList();
+
+        // 0 clients
+        if (connectedClients.isEmpty()) {
+            return null;
+        }
+
         if (current == null) {
-            if (!connectedClients.isEmpty()) {
-                current = connectedClients.get(0);
-            }
-            return current;
+            current = connectedClients.get(0);
         } else {
-            // 0 clients
-            if (connectedClients.isEmpty()) {
-                return null;
-            }
             // 1 client
             if (connectedClients.size() == 1) {
                 current = connectedClients.get(0);
@@ -104,8 +106,8 @@ public class ConsumerGroup {
                 current = connectedClients.get(connectedClients.indexOf(current) + 1);
                 return current;
             }
-            return current;
         }
+        return current;
     }
 
     @Override
