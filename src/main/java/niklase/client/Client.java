@@ -52,8 +52,12 @@ public class Client {
                         this.subscribedTopics.add(parts[1]);
                         this.consumedMessages.init(parts[1]);
                         continue;
+                    case "UNSUB_RESP_OK":
+                        this.subscribedTopics.remove(parts[1]);
+                        continue;
                     case "MESSAGE":
                         this.consumedMessages.add(parts[1], parts[2]);
+                        continue;
                     default:
 
                     }
@@ -89,6 +93,10 @@ public class Client {
         logger.info("Got SUB_RESP_OK from broker");
     }
 
+    /**
+     * Subscribes a client to a topic via an explicit consumer group. Multiple subscriptions to the separate topic are
+     * not supported and will result in undefined behaviour
+     */
     public void subscribe(final String topic, final String group) throws IOException, InterruptedException {
         send("SUB_REQ," + topic + "," + group);
         logger.info("Sent SUB_REQ to broker, waiting for OK");
@@ -110,4 +118,14 @@ public class Client {
     public void hook() {
         // debugging
     }
+
+    public void unsubscribe(final String topic) throws IOException, InterruptedException {
+        send("UNSUB_REQ," + topic);
+        logger.info("Sent UNSUB_REQ to broker, waiting for OK");
+        while (subscribedTopics.contains(topic)) {
+            Thread.sleep(10);
+        }
+        logger.info("Got UNSUB_RESP_OK from broker");
+    }
+
 }

@@ -69,8 +69,15 @@ public class Broker {
                         topics.subscribeConsumerGroupToTopic(topic, consumerGroupName);
                         topics.getConsumerGroupByName(consumerGroupName)
                                 .add(new ClientProxy(clientName, socketWithClient));
-                        new PrintStream(socketWithClient.getOutputStream(), true).println("SUB_RESP_OK," + topic);
+                        new PrintStream(socketWithClient.getOutputStream(), true).println("SUB_RESP_OK," + topic + "," + consumerGroupName);
                         break;
+                    case "UNSUB_REQ":
+                        final String finalClientName1 = clientName;
+                        topics.getConsumerGroupsSubscribedTo(parts[1])
+                                .forEach(consumerGroup -> consumerGroup.removeClientProxy(finalClientName1));
+                        topics.tidy(parts[1]);
+                        new PrintStream(socketWithClient.getOutputStream(), true).println("UNSUB_RESP_OK," + topic);
+                        continue;
                     case "MESSAGE":
                         var payload = parts[2];
                         topics.accept(topic, payload);

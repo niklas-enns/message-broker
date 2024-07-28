@@ -39,8 +39,7 @@ public class ConsumerGroup {
     }
 
     public void clearSocket(final String clientName, final Socket socket) {
-        this.clients.stream()
-                .forEach(clientProxy -> clientProxy.clearSocketToClient(socket));
+        this.clients.forEach(clientProxy -> clientProxy.clearSocketToClient(socket));
     }
 
     private synchronized void flush() {
@@ -129,5 +128,13 @@ public class ConsumerGroup {
 
     public String getName() {
         return this.name;
+    }
+
+    public void removeClientProxy(final String clientName) {
+        this.clients.removeIf(clientProxy -> clientProxy.getName().equals(clientName));
+    }
+
+    public boolean isEmpty() {
+        return this.clients.isEmpty();
     }
 }

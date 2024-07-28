@@ -15,7 +15,7 @@ This message broker can
 - [ ] Persistent queueing
   - During operation, the broker can be restarted and the processing continues without loss of messages
 - [x] For load-balancing on the consumer side, clients can be grouped into consumer groups
-- [ ] Cancel subscriptions 
+- [x] Cancel subscriptions 
 
 ## Quality Backlog
 - [x] Introduce logging Library

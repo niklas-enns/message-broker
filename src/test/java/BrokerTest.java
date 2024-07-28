@@ -184,8 +184,24 @@ class BrokerTest {
             client1.publish("topic1", "My string data");
         }
         Thread.sleep(100);
-        assertEquals(10,client1.getConsumedMessages("topic1").size());
-        assertEquals(10,client2.getConsumedMessages("topic1").size());
+        assertEquals(10, client1.getConsumedMessages("topic1").size());
+        assertEquals(10, client2.getConsumedMessages("topic1").size());
+    }
+
+    @Test
+    @DisplayName("unsubscribe")
+    void unsubscribe1() throws IOException, InterruptedException {
+        client2.subscribe("topic1", "group1");
+        Thread.sleep(100);
+        client1.publish("topic1", "My string data");
+        Thread.sleep(100);
+        assertEquals(1, client2.getConsumedMessages("topic1").size());
+
+        client2.unsubscribe("topic1");
+        client1.publish("topic1", "My string data after unsub");
+        Thread.sleep(100);
+        assertEquals(1, client2.getConsumedMessages("topic1").size());
+
     }
 
 }

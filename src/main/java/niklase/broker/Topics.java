@@ -45,4 +45,11 @@ public class Topics {
         return consumerGroups.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
+    public Collection<ConsumerGroup> getConsumerGroupsSubscribedTo(final String topic) {
+        return this.byTopic(topic);
+    }
+
+    public void tidy(final String topic) {
+        this.byTopic(topic).removeIf(ConsumerGroup::isEmpty);
+    }
 }
