@@ -7,15 +7,13 @@ This message broker can
 .
 
 ## Feature Backlog
-- [x] Multiple topics
-- [x] Cleanup on disconnect
-- [x] 1:n message delivery
+- [x] Topics
+- [x] Consumer Groups
 - [x] In-memory message queueing
   - After connecting, clients will receive messages of their subscriptions that arrived while the clients were disconnected 
 - [ ] Persistent queueing
   - During operation, the broker can be restarted and the processing continues without loss of messages
-- [x] For load-balancing on the consumer side, clients can be grouped into consumer groups
-- [x] Cancel subscriptions 
+- [x] Cancel Subscriptions 
 
 ## Quality Backlog
 - [x] Introduce logging Library
