@@ -21,6 +21,7 @@ This message broker can
 - [ ] HA via Leaderless Replication of Messages and Load Balancing
     - This drops strict ordering, because each node will construct its own message order
     - [ ] Replication of all messages to all nodes
+      - [ ] Nodes know about each other via IP:PORT config parameters
       - [ ] On startup, nodes send replication requests to each other
       - [ ] When a message is received from a consumer, the message will be forwarded to replication receivers
       - [ ] The replication receiver will feed all messages into its own queues
