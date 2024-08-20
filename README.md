@@ -18,11 +18,11 @@ This message broker can
 ## Quality Backlog
 - [x] Introduce logging Library
 - [x] Unit-Test ConsumerGroup.getNextClientProxyWithSocket
-- [ ] Asynchronous message replication for higher throughput of message ingestion 
-  - No majority quorum, because strong consistency is not required
-- [ ] Leaderless replication
+- [ ] HA via Leaderless Replication of Messages and Load Balancing
     - This drops strict ordering, because each node will construct its own message order
-- [ ] High Availability with Active Redundancy
-  - [ ] Failures of single node do not block the overall operation
-    - [ ] On failure, clients connect to any node and continue
-      - [ ] State (Queues + Subscriptions) have to be replicated
+    - [ ] Replication of all messages to all nodes
+      - [ ] On startup, nodes send replication requests to each other
+      - [ ] When a message is received from a consumer, the message will be forwarded to replication receivers
+      - [ ] The replication receiver will feed all messages into its own queues
+    - [ ] (On failure) clients connect to any node and message processing continues
+      - [ ] Subscriptions have to be replicated
