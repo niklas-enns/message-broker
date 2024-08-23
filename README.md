@@ -25,5 +25,6 @@ This message broker can
       - [ ] On startup, nodes send replication requests to each other
       - [ ] When a message is received from a consumer, the message will be forwarded to replication receivers
       - [ ] The replication receiver will feed all messages into its own queues
+      - [ ] Consumer Acks are distributed 
     - [ ] (On failure) clients connect to any node and message processing continues
       - [ ] Subscriptions have to be replicated
