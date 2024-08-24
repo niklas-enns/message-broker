@@ -1,30 +1,40 @@
 # Message Broker
+
 This message broker can
+
 * distribute text-based messages between multiple clients
 * via separate topics
 * with tolerance for temporary connection interruptions to clients
-* with load balancing on consumer groups
+* with load balancing on Consumer Groups
+* with high availability with Leaderless Replication
+
 .
 
 ## Feature Backlog
+
 - [x] Topics
 - [x] Consumer Groups
 - [x] In-memory message queueing
-  - After connecting, clients will receive messages of their subscriptions that arrived while the clients were disconnected 
+    - After connecting, clients will receive messages of their subscriptions that arrived while the clients were
+      disconnected
 - [ ] Persistent queueing
-  - During operation, the broker can be restarted and the processing continues without loss of messages
-- [x] Cancel Subscriptions 
+    - During operation, the broker can be restarted and the processing continues without loss of messages
+- [x] Cancel Subscriptions
 
 ## Quality Backlog
+
 - [x] Introduce logging Library
 - [x] Unit-Test ConsumerGroup.getNextClientProxyWithSocket
 - [ ] HA via Leaderless Replication of Messages and Load Balancing
     - This drops strict ordering, because each node will construct its own message order
-    - [ ] Replication of all messages to all nodes
-      - [ ] Nodes know about each other via IP:PORT config parameters
-      - [ ] On startup, nodes send replication requests to each other
-      - [ ] When a message is received from a consumer, the message will be forwarded to replication receivers
-      - [ ] The replication receiver will feed all messages into its own queues
-      - [ ] Consumer Acks are distributed 
+    - [x] Replication of all messages to all nodes
+        - [x] Nodes know about each other via IP:PORT config parameters
+        - [x] On startup, nodes send replication requests to each other
+            - [ ] Consider migrating to a push-based instead of subscription-based model
+        - [x] When a message is received from a consumer, the message will be forwarded to replication receivers
+        - [x] The replication receiver feeds all messages into its own topics
+        - [x] Delivered messages are deleted cluster-wide
+    - [ ] Nodes without clients continue receiving replicated messages (for HA) but delegate their message distribution
+      responsibilities to other nodes. (Otherwise these messages would get stuck in the node)
     - [ ] (On failure) clients connect to any node and message processing continues
-      - [ ] Subscriptions have to be replicated
+        - [ ] Subscriptions have to be replicated

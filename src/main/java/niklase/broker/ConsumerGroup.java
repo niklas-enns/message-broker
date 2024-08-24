@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ public class ConsumerGroup {
     private ClientProxy current = null;
 
     private List<String> messages = new LinkedList<>();
+    private Function<String, Boolean> shouldBeProcessed = (s -> true);
 
     public ConsumerGroup(final String name) {
         this.name = name;
@@ -48,6 +50,10 @@ public class ConsumerGroup {
             var socketToClient = clientProxy.socketToClient();
             try {
                 messages.removeIf(envelope -> {
+                    if (!this.shouldBeProcessed.apply(envelope)) {
+                        return false;
+                    }
+
                     try {
                         new PrintStream(socketToClient.getOutputStream(), true).println(envelope);
                     } catch (IOException e) {
@@ -136,5 +142,13 @@ public class ConsumerGroup {
 
     public boolean isEmpty() {
         return this.clients.isEmpty();
+    }
+
+    public void setShouldBeProcessed(final Function<String, Boolean> shouldBeProcessed) {
+        this.shouldBeProcessed = shouldBeProcessed;
+    }
+
+    public long getTotalMessageCount() {
+        return messages.size();
     }
 }

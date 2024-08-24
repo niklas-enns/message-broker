@@ -15,7 +15,6 @@ class ClientProxy {
         this.socketToClient = socketToClient;
     }
 
-
     public void setSocketToClient(final Socket socketWithClient) {
         this.socketToClient = socketWithClient;
     }

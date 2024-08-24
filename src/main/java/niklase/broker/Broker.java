@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -19,13 +22,25 @@ public class Broker {
     private Topics topics = new Topics();
     private ServerSocket serverSocketForClients = null;
 
+    private ReplicationSender replicationSender = new ReplicationSender();
+    private ReplicationReceiver replicationReceiver = new ReplicationReceiver();
+
     public void run(final int port) throws IOException {
-        logger.info("Starting Message Broker on port {}", port);
+        logger.info("Starting Message Broker");
+        replicationSender.start();
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        this.replicationReceiver.sendReplicationRequests();
+
+        logger.info("Opening socket for clients on port {}", port);
         this.serverSocketForClients = new ServerSocket(port);
         while (true) {
             try {
                 var accept = serverSocketForClients.accept();
-                startNewHandler(accept);
+                startNewIncomingClientMessageHandler(accept);
             } catch (SocketException e) {
                 logger.info("Stopping broker due to a SocketException...Have we been stopped regularly?");
                 break;
@@ -35,7 +50,7 @@ public class Broker {
         }
     }
 
-    private void startNewHandler(final Socket socketWithClient) {
+    private void startNewIncomingClientMessageHandler(final Socket socketWithClient) {
         Thread.ofVirtual().start(() -> {
             var clientName = "";
             try {
@@ -69,7 +84,8 @@ public class Broker {
                         topics.subscribeConsumerGroupToTopic(topic, consumerGroupName);
                         topics.getConsumerGroupByName(consumerGroupName)
                                 .add(new ClientProxy(clientName, socketWithClient));
-                        new PrintStream(socketWithClient.getOutputStream(), true).println("SUB_RESP_OK," + topic + "," + consumerGroupName);
+                        new PrintStream(socketWithClient.getOutputStream(), true).println(
+                                "SUB_RESP_OK," + topic + "," + consumerGroupName);
                         break;
                     case "UNSUB_REQ":
                         final String finalClientName1 = clientName;
@@ -79,6 +95,7 @@ public class Broker {
                         new PrintStream(socketWithClient.getOutputStream(), true).println("UNSUB_RESP_OK," + topic);
                         continue;
                     case "MESSAGE":
+                        replicationSender.accept(line);
                         var payload = parts[2];
                         topics.accept(topic, payload);
                         break;
@@ -89,7 +106,8 @@ public class Broker {
                 logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
             } catch (IOException | EndOfStreamException e) {
                 final String finalClientName = clientName;
-                getConsumerGroups().forEach(consumerGroup -> consumerGroup.clearSocket(finalClientName, socketWithClient));
+                getConsumerGroups().forEach(
+                        consumerGroup -> consumerGroup.clearSocket(finalClientName, socketWithClient));
                 try {
                     socketWithClient.close();
                 } catch (IOException ex) {
@@ -108,9 +126,39 @@ public class Broker {
     public void stop() throws IOException {
         logger.info("Stopping broker....");
         this.serverSocketForClients.close();
+        this.replicationSender.stop();
     }
 
     public void hook() {
         //for debugging purposes
+    }
+
+    public void setRemoteReplicationProviderAddresses(final List<InetSocketAddress> replicationAddresses) {
+        this.replicationReceiver.setReplicationSenders(replicationAddresses);
+        this.replicationReceiver.setMessageAcceptor((line) -> {
+            var parts = line.split(",");
+            topics.accept(parts[1], parts[2]);
+        });
+    }
+
+    public void setLocalReplicationProviderPort(final int replicationPortBroker) {
+        this.replicationSender.setLocalPort(replicationPortBroker);
+    }
+
+    public void setMessageDeliveryFilter(final int moduloRemainder) {
+        this.topics.setMessageProcessingFilter((envelope) -> {
+            if (Math.abs(envelope.hashCode() % 2) == moduloRemainder) {
+                logger.info("Processing message {} with hashCode % 2 = {} and configured moduloRemainder {}", envelope,
+                        envelope.hashCode() % 2, moduloRemainder);
+                return true;
+            }
+            logger.info("Skipping message {} with hashCode % 2 = {} and configured moduloRemainder {}", envelope,
+                    envelope.hashCode() % 2, moduloRemainder);
+            return false;
+        });
+    }
+
+    public long getTotalMessageCount() {
+        return this.getConsumerGroups().stream().mapToLong(ConsumerGroup::getTotalMessageCount).sum();
     }
 }
