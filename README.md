@@ -36,5 +36,7 @@ This message broker can
         - [x] Delivered messages are deleted cluster-wide
     - [ ] Nodes without clients continue receiving replicated messages (for HA) but delegate their message distribution
       responsibilities to other nodes. (Otherwise these messages would get stuck in the node)
+    - [ ] Cluster divides responsibilities for message distribution automatically
+      - No manual configuration by admin needed
     - [ ] (On failure) clients connect to any node and message processing continues
         - [ ] Subscriptions have to be replicated
