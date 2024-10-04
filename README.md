@@ -33,8 +33,10 @@ This message broker can
             - [ ] Consider migrating to a push-based instead of subscription-based model
         - [x] When a message is received from a consumer, the message will be forwarded to replication receivers
         - [x] The replication receiver feeds all messages into its own topics
-        - [?] Delivered messages are deleted cluster-wide
-    - [ ] Decoupling of replication and distribution 
+        - [ ] Delivered messages are deleted cluster-wide
+    - [ ] Decoupling of replication and distribution
+    - [ ] Nodes without clients continue receiving replicated messages (for HA) but delegate their message distribution
+      responsibilities to other nodes. (Otherwise these messages would get stuck in the node)
     - [ ] Cluster organizes the division of labour automatically
       - No manual configuration by admin needed
       - [ ] Responsibilities are negotiated when a node becomes or unbecomes the role of a message distributor 
