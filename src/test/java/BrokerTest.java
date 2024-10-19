@@ -201,7 +201,6 @@ class BrokerTest {
         client1.publish("topic1", "My string data after unsub");
         Thread.sleep(100);
         assertEquals(1, client2.getConsumedMessages("topic1").size());
-
     }
 
 }

@@ -8,7 +8,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -19,14 +18,16 @@ import org.slf4j.LoggerFactory;
 public class Broker {
     private static final Logger logger = LoggerFactory.getLogger(Broker.class);
 
-    private Topics topics = new Topics();
     private ServerSocket serverSocketForClients = null;
 
     private ReplicationSender replicationSender = new ReplicationSender();
-    private ReplicationReceiver replicationReceiver = new ReplicationReceiver();
+    private Topics topics = new Topics(replicationSender);
+    private ReplicationReceiver replicationReceiver = new ReplicationReceiver(topics);
 
     public void run(final int port) throws IOException {
         logger.info("Starting Message Broker");
+        topics.setPropagateSuccessfulMessageDelivery(
+                (envelope, consumerGroup) -> replicationSender.acceptMessageDeliveryConfirmation(envelope, consumerGroup));
         replicationSender.start();
         try {
             Thread.sleep(100);
@@ -81,11 +82,12 @@ public class Broker {
                         if (parts.length == 3) {
                             consumerGroupName = parts[2];
                         }
-                        topics.subscribeConsumerGroupToTopic(topic, consumerGroupName);
+                        topics.subscribeConsumerGroupToTopic(topic, consumerGroupName, true);
                         topics.getConsumerGroupByName(consumerGroupName)
                                 .add(new ClientProxy(clientName, socketWithClient));
                         new PrintStream(socketWithClient.getOutputStream(), true).println(
                                 "SUB_RESP_OK," + topic + "," + consumerGroupName);
+                        topics.flush(consumerGroupName); // if the topic already contains messages
                         break;
                     case "UNSUB_REQ":
                         final String finalClientName1 = clientName;
@@ -95,7 +97,6 @@ public class Broker {
                         new PrintStream(socketWithClient.getOutputStream(), true).println("UNSUB_RESP_OK," + topic);
                         continue;
                     case "MESSAGE":
-                        replicationSender.accept(line);
                         var payload = parts[2];
                         topics.accept(topic, payload);
                         break;
@@ -105,9 +106,8 @@ public class Broker {
                 }
                 logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
             } catch (IOException | EndOfStreamException e) {
-                final String finalClientName = clientName;
                 getConsumerGroups().forEach(
-                        consumerGroup -> consumerGroup.clearSocket(finalClientName, socketWithClient));
+                        consumerGroup -> consumerGroup.clearSocket(socketWithClient));
                 try {
                     socketWithClient.close();
                 } catch (IOException ex) {
@@ -135,14 +135,10 @@ public class Broker {
 
     public void setRemoteReplicationProviderAddresses(final List<InetSocketAddress> replicationAddresses) {
         this.replicationReceiver.setReplicationSenders(replicationAddresses);
-        this.replicationReceiver.setMessageAcceptor((line) -> {
-            var parts = line.split(",");
-            topics.accept(parts[1], parts[2]);
-        });
     }
 
     public void setLocalReplicationProviderPort(final int replicationPortBroker) {
-        this.replicationSender.setLocalPort(replicationPortBroker);
+        this.replicationSender.setPortForListeningForReplicationRequests(replicationPortBroker);
     }
 
     public void setMessageDeliveryFilter(final int moduloRemainder) {

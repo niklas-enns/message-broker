@@ -7,11 +7,27 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Topics {
+    private static final Logger logger = LoggerFactory.getLogger(Topics.class);
+
+    private final ReplicationSender replicationSender;
+
     private HashMap<String, Set<ConsumerGroup>> consumerGroups = new HashMap<>();
     private Function<String, Boolean> shouldBeProcessed;
+    private DeliveryPropagator deliveryPropagator;
 
-    public synchronized void subscribeConsumerGroupToTopic(final String topic, final String consumerGroupName) {
+    public Topics(final ReplicationSender replicationSender) {
+        this.replicationSender = replicationSender;
+    }
+
+    public synchronized void subscribeConsumerGroupToTopic(final String topic, final String consumerGroupName,
+            final boolean replicate) {
+        if (replicate) {
+            replicationSender.acceptSubscriptionRequest(topic, consumerGroupName);
+        }
         var consumerGroupSetOfTopic = consumerGroups.get(topic);
         if (consumerGroupSetOfTopic == null) {
             var consumerGroupSet = new HashSet<ConsumerGroup>();
@@ -29,6 +45,7 @@ public class Topics {
         var consumerGroup = new ConsumerGroup(consumerGroupName);
         if (shouldBeProcessed != null) {
             consumerGroup.setShouldBeProcessed(this.shouldBeProcessed);
+            consumerGroup.setPropagateSuccessfulMessageDelivery(this.deliveryPropagator);
         }
         return consumerGroup;
     }
@@ -41,6 +58,8 @@ public class Topics {
     public void accept(final String topic, final String message) {
         var envelope = "MESSAGE," + topic + "," + message;
         byTopic(topic).forEach(consumerGroup -> {
+            replicationSender.acceptMessage(
+                    "REPLICATED_MESSAGE," + consumerGroup.getName() + "," + topic + "," + message);
             consumerGroup.accept(envelope);
         });
     }
@@ -64,5 +83,26 @@ public class Topics {
 
     public void setMessageProcessingFilter(Function<String, Boolean> shouldBeProcessed) {
         this.shouldBeProcessed = shouldBeProcessed;
+    }
+
+    public void setPropagateSuccessfulMessageDelivery(DeliveryPropagator deliveryPropagator) {
+        this.deliveryPropagator = deliveryPropagator;
+    }
+
+    public void deleteMessage(String topicName, String consumerGroup, final String message) {
+        //TODO handle case topic does not exist
+        this.getConsumerGroupByName(consumerGroup).delete("MESSAGE," + topicName + "," + message);
+    }
+
+    public void flush(final String consumerGroupName) {
+        this.getConsumerGroupByName(consumerGroupName).flush();
+    }
+
+    public void createConsumerGroupForTopic(final String topic, final String consumerGroup) {
+        this.subscribeConsumerGroupToTopic(topic, consumerGroup, true);
+    }
+
+    public void storeInConsumerGroup(final String consumerGroup, final String envelope) {
+        this.getConsumerGroupByName(consumerGroup).accept(envelope);
     }
 }

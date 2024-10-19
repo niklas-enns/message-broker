@@ -19,6 +19,8 @@ public class ConsumerGroup {
 
     private List<String> messages = new LinkedList<>();
     private Function<String, Boolean> shouldBeProcessed = (s -> true);
+    private DeliveryPropagator deliveryPropagator = (String string, String string2) -> {
+    };
 
     public ConsumerGroup(final String name) {
         this.name = name;
@@ -29,6 +31,7 @@ public class ConsumerGroup {
     }
 
     public synchronized void accept(final String envelope) {
+        logger.info("Storing [{}]", envelope);
         messages.add(envelope);
         this.flush();
     }
@@ -40,11 +43,11 @@ public class ConsumerGroup {
         this.flush();
     }
 
-    public void clearSocket(final String clientName, final Socket socket) {
+    public void clearSocket(final Socket socket) {
         this.clients.forEach(clientProxy -> clientProxy.clearSocketToClient(socket));
     }
 
-    private synchronized void flush() {
+    synchronized void flush() {
         var clientProxy = getNextClientProxyWithSocket();
         if (clientProxy != null) {
             var socketToClient = clientProxy.socketToClient();
@@ -61,6 +64,7 @@ public class ConsumerGroup {
                     }
                     logger.info("<<< >>> forwarded [{}] to [{}@{}]", envelope, clientProxy.getName(),
                             clientProxy.socketToClient().getPort());
+                    deliveryPropagator.accept(envelope, name); //TODO error handling??
                     return true;
                 });
                 logger.info("Flushing {} finished without Exceptions. {} message(s) are left", clientProxy.getName(),
@@ -151,4 +155,13 @@ public class ConsumerGroup {
     public long getTotalMessageCount() {
         return messages.size();
     }
+
+    public void setPropagateSuccessfulMessageDelivery(DeliveryPropagator deliveryPropagator) {
+        this.deliveryPropagator = deliveryPropagator;
+    }
+
+    public void delete(final String envelopeToDelete) {
+        this.messages.removeIf(m -> m.equals(envelopeToDelete));
+    }
+
 }
