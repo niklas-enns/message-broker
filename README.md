@@ -34,6 +34,7 @@ This message broker can
         - [x] When a message is received from a consumer, the message will be forwarded to replication receivers
         - [x] The replication receiver feeds all messages into its own topics
         - [x] Delivered messages are deleted cluster-wide
+        - [ ] When the network between two nodes fails, they adapt their division of labour automatically. They start distrobuting all messages now, not only the part they were initially responsible for 
     - [ ] Nodes without clients continue receiving replicated messages (for HA) but delegate their message distribution
       responsibilities to other nodes. (Otherwise these messages would get stuck in the node)
     - [ ] Cluster organizes the division of labour automatically
