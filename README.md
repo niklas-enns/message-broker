@@ -43,8 +43,8 @@ This message broker can
         - [ ] A node looses its last client of a consumer group
         - [ ] A new node joins the cluster
         - [ ] A node leaves the cluster
-    - [x] (On failure) clients connect to any node and message processing continues
-        - [ ] Subscription requests (consumer group to topic) have to be replicated
+    - [ ] (On failure) clients connect to any node and message processing continues
+        - [x] Subscription requests (consumer group to topic) have to be replicated
         - [ ] Subscription requests (client to consumer group) have to be replicated for recognition on connect
         - [ ] Unsubscribe requests (client to consumer group) have to be replicated
 
