@@ -34,16 +34,19 @@ This message broker can
         - [x] When a message is received from a consumer, the message will be forwarded to replication receivers
         - [x] The replication receiver feeds all messages into its own topics
         - [x] Delivered messages are deleted cluster-wide
-        - [ ] When the network between two nodes fails, they adapt their division of labour automatically. They start distributing all messages now, not only the part they were initially responsible for 
     - [ ] Nodes without clients continue receiving replicated messages (for HA) but delegate their message distribution
       responsibilities to other nodes. (Otherwise these messages would get stuck in the node)
     - [ ] Cluster organizes the division of labour automatically
       - No manual configuration by admin needed
-      - [ ] Responsibilities are negotiated when a node becomes or unbecomes the role of a message distributor 
+      - [ ] Topology changes
+        - [ ] A node gets a first client of a consumer group
+        - [ ] A node looses its last client of a consumer group
+        - [ ] A new node joins the cluster
+        - [ ] A node leaves the cluster
     - [x] (On failure) clients connect to any node and message processing continues
-        - [x] Subscription requests have to be replicated
-          - [ ] fail-safe (retries on network failure)
-        - [ ] Unsubscribe requests have to be replicated
+        - [ ] Subscription requests (consumer group to topic) have to be replicated
+        - [ ] Subscription requests (client to consumer group) have to be replicated for recognition on connect
+        - [ ] Unsubscribe requests (client to consumer group) have to be replicated
 
 ## Lessons Learned
 * Networking and concurrency increase the complexity (yes, we all knew this before, but I _felt_ it during development :-))
