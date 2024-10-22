@@ -31,8 +31,8 @@ This message broker can
         - [x] Nodes know about each other via IP:PORT config parameters
         - [x] On startup, nodes send replication requests to each other
             - [ ] Consider migrating to a push-based instead of subscription-based model
-        - [x] When a message is received from a consumer, the message will be forwarded to replication receivers
-        - [x] The replication receiver feeds all messages into its own topics
+        - [x] When a consumer group receives a message, it will be forwarded to replication receivers
+        - [x] The replication receiver feeds all messages into its own replicated consumer groups
         - [x] Delivered messages are deleted cluster-wide
     - [ ] Nodes without clients continue receiving replicated messages (for HA) but delegate their message distribution
       responsibilities to other nodes. (Otherwise these messages would get stuck in the node)
