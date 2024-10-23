@@ -32,11 +32,12 @@ This message broker can
         - [x] Nodes know about each other via IP:PORT config parameters
           - [x] On startup, nodes send replication requests to each other
             - [ ] Consider migrating to a push-based instead of subscription-based model
-      - Config v2 (links are bidirectional, a joining node has to know only a single cluster node, can connect anytime)
+      - Config v2
         - [ ] Topology changes during runtime
           - [ ] Nodes can join the cluster by connecting to any cluster node
             - [ ] it gets a list of all known nodes and establishes replication links
             - [ ] concurrency control
+        - [ ] Bidirectional links
       - Distribution
           - [x] When a consumer group receives a message, it will be forwarded to replication receivers
           - [x] The replication receiver feeds all messages into its own replicated consumer groups
