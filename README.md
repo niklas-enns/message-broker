@@ -29,9 +29,9 @@ This message broker can
     - This drops strict ordering, because each node will construct its own message order
     - [x] Replication of all messages to all nodes
       - Config v1 (links are uni directional, every node has to know every node via config params)
-          - [x] Nodes know about each other via IP:PORT config parameters
-            - [x] On startup, nodes send replication requests to each other
-              - [ ] Consider migrating to a push-based instead of subscription-based model
+        - [x] Nodes know about each other via IP:PORT config parameters
+          - [x] On startup, nodes send replication requests to each other
+            - [ ] Consider migrating to a push-based instead of subscription-based model
       - Config v2 (links are bidirectional, a joining node has to know only a single cluster node, can connect anytime)
         - [ ] Topology changes during runtime
           - [ ] Nodes can join the cluster by connecting to any cluster node
