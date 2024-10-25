@@ -8,7 +8,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,21 +19,21 @@ public class Broker {
 
     private ServerSocket serverSocketForClients = null;
 
-    private ReplicationSender replicationSender = new ReplicationSender();
-    private Topics topics = new Topics(replicationSender);
-    private ReplicationReceiver replicationReceiver = new ReplicationReceiver(topics);
+    private ReplicationLinks replicationLinks = new ReplicationLinks();
+    private MessageProcessingFilter messageProcessingFilter = new MessageProcessingFilter();
+    private Topics topics = new Topics(replicationLinks, messageProcessingFilter);
 
     public void run(final int port) throws IOException {
         logger.info("Starting Message Broker");
         topics.setPropagateSuccessfulMessageDelivery(
-                (envelope, consumerGroup) -> replicationSender.acceptMessageDeliveryConfirmation(envelope, consumerGroup));
-        replicationSender.start();
+                (envelope, consumerGroup) -> replicationLinks.acceptMessageDeliveryConfirmation(envelope,
+                        consumerGroup));
+        replicationLinks.startAcceptingIncomingReplicationLinkConnections(topics);
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        this.replicationReceiver.sendReplicationRequests();
 
         logger.info("Opening socket for clients on port {}", port);
         this.serverSocketForClients = new ServerSocket(port);
@@ -126,32 +125,23 @@ public class Broker {
     public void stop() throws IOException {
         logger.info("Stopping broker....");
         this.serverSocketForClients.close();
-        this.replicationSender.stop();
+        this.replicationLinks.stop();
     }
 
     public void hook() {
         //for debugging purposes
     }
 
-    public void setRemoteReplicationProviderAddresses(final List<InetSocketAddress> replicationAddresses) {
-        this.replicationReceiver.setReplicationSenders(replicationAddresses);
+    public void joinCluster(final InetSocketAddress clusterEntryAddress) {
+        this.replicationLinks.establishLink(clusterEntryAddress);
     }
 
-    public void setLocalReplicationProviderPort(final int replicationPortBroker) {
-        this.replicationSender.setPortForListeningForReplicationRequests(replicationPortBroker);
+    public void setClusterEntryLocalPort(final int clusterEntryLocalPort) {
+        this.replicationLinks.setClusterEntryLocalPort(clusterEntryLocalPort);
     }
 
     public void setMessageDeliveryFilter(final int moduloRemainder) {
-        this.topics.setMessageProcessingFilter((envelope) -> {
-            if (Math.abs(envelope.hashCode() % 2) == moduloRemainder) {
-                logger.info("Processing message {} with hashCode % 2 = {} and configured moduloRemainder {}", envelope,
-                        envelope.hashCode() % 2, moduloRemainder);
-                return true;
-            }
-            logger.info("Skipping message {} with hashCode % 2 = {} and configured moduloRemainder {}", envelope,
-                    envelope.hashCode() % 2, moduloRemainder);
-            return false;
-        });
+        this.messageProcessingFilter.setModuloRemainder(moduloRemainder);
     }
 
     public long getTotalMessageCount() {

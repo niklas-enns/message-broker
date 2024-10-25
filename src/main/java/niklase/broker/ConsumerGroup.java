@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,16 +13,17 @@ import org.slf4j.LoggerFactory;
 public class ConsumerGroup {
     private static final Logger logger = LoggerFactory.getLogger(ConsumerGroup.class);
     private final String name;
+    private final MessageProcessingFilter messageProcessingFilter;
     private List<ClientProxy> clients = new LinkedList<>();
     private ClientProxy current = null;
 
     private List<String> messages = new LinkedList<>();
-    private Function<String, Boolean> shouldBeProcessed = (s -> true);
     private DeliveryPropagator deliveryPropagator = (String string, String string2) -> {
     };
 
-    public ConsumerGroup(final String name) {
+    public ConsumerGroup(final String name, final MessageProcessingFilter messageProcessingFilter) {
         this.name = name;
+        this.messageProcessingFilter = messageProcessingFilter;
     }
 
     public synchronized void add(final ClientProxy clientProxy) {
@@ -53,7 +53,7 @@ public class ConsumerGroup {
             var socketToClient = clientProxy.socketToClient();
             try {
                 messages.removeIf(envelope -> {
-                    if (!this.shouldBeProcessed.apply(envelope)) {
+                    if (!this.messageProcessingFilter.shouldBeProcessed(envelope)) {
                         return false;
                     }
 
@@ -146,10 +146,6 @@ public class ConsumerGroup {
 
     public boolean isEmpty() {
         return this.clients.isEmpty();
-    }
-
-    public void setShouldBeProcessed(final Function<String, Boolean> shouldBeProcessed) {
-        this.shouldBeProcessed = shouldBeProcessed;
     }
 
     public long getTotalMessageCount() {

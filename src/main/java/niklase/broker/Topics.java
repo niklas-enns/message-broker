@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -13,20 +12,21 @@ import org.slf4j.LoggerFactory;
 public class Topics {
     private static final Logger logger = LoggerFactory.getLogger(Topics.class);
 
-    private final ReplicationSender replicationSender;
+    private final ReplicationLinks replicationLinks;
+    private MessageProcessingFilter messageProcessingFilter;
 
     private HashMap<String, Set<ConsumerGroup>> consumerGroups = new HashMap<>();
-    private Function<String, Boolean> shouldBeProcessed;
     private DeliveryPropagator deliveryPropagator;
 
-    public Topics(final ReplicationSender replicationSender) {
-        this.replicationSender = replicationSender;
+    public Topics(final ReplicationLinks replicationLinks, final MessageProcessingFilter messageProcessingFilter) {
+        this.replicationLinks = replicationLinks;
+        this.messageProcessingFilter = messageProcessingFilter;
     }
 
     public synchronized void subscribeConsumerGroupToTopic(final String topic, final String consumerGroupName,
             final boolean replicate) {
         if (replicate) {
-            replicationSender.acceptSubscriptionRequest(topic, consumerGroupName);
+            replicationLinks.acceptSubscriptionRequest(topic, consumerGroupName);
         }
         var consumerGroupSetOfTopic = consumerGroups.get(topic);
         if (consumerGroupSetOfTopic == null) {
@@ -34,7 +34,7 @@ public class Topics {
             consumerGroupSet.add(createConsumerGroup(consumerGroupName));
             consumerGroups.put(topic, consumerGroupSet);
         } else {
-            if (consumerGroupSetOfTopic.contains(new ConsumerGroup(consumerGroupName))) {
+            if (consumerGroupSetOfTopic.contains(new ConsumerGroup(consumerGroupName, messageProcessingFilter))) {
                 // already subscribed
             }
             consumerGroupSetOfTopic.add(createConsumerGroup(consumerGroupName));
@@ -42,11 +42,8 @@ public class Topics {
     }
 
     private ConsumerGroup createConsumerGroup(final String consumerGroupName) {
-        var consumerGroup = new ConsumerGroup(consumerGroupName);
-        if (shouldBeProcessed != null) {
-            consumerGroup.setShouldBeProcessed(this.shouldBeProcessed);
-            consumerGroup.setPropagateSuccessfulMessageDelivery(this.deliveryPropagator);
-        }
+        var consumerGroup = new ConsumerGroup(consumerGroupName, messageProcessingFilter);
+        consumerGroup.setPropagateSuccessfulMessageDelivery(this.deliveryPropagator);
         return consumerGroup;
     }
 
@@ -58,7 +55,7 @@ public class Topics {
     public void accept(final String topic, final String message) {
         var envelope = "MESSAGE," + topic + "," + message;
         byTopic(topic).forEach(consumerGroup -> {
-            replicationSender.acceptMessage(
+            replicationLinks.acceptMessage(
                     "REPLICATED_MESSAGE," + consumerGroup.getName() + "," + topic + "," + message);
             consumerGroup.accept(envelope);
         });
@@ -81,10 +78,6 @@ public class Topics {
         this.byTopic(topic).removeIf(ConsumerGroup::isEmpty);
     }
 
-    public void setMessageProcessingFilter(Function<String, Boolean> shouldBeProcessed) {
-        this.shouldBeProcessed = shouldBeProcessed;
-    }
-
     public void setPropagateSuccessfulMessageDelivery(DeliveryPropagator deliveryPropagator) {
         this.deliveryPropagator = deliveryPropagator;
     }
@@ -105,4 +98,5 @@ public class Topics {
     public void storeInConsumerGroup(final String consumerGroup, final String envelope) {
         this.getConsumerGroupByName(consumerGroup).accept(envelope);
     }
+
 }

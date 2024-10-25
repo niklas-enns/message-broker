@@ -28,20 +28,20 @@ This message broker can
 - [ ] HA via Leaderless Replication of Messages and Load Balancing
     - This drops strict ordering, because each node will construct its own message order
     - [x] Replication of all messages to all nodes
-      - Config v1 (links are uni directional, every node has to know every node via config params)
+      - Config v1 (~~links are uni directional, every node has to know every node via config params~~)
         - [x] Nodes know about each other via IP:PORT config parameters
           - [x] On startup, nodes send replication requests to each other
             - [ ] Consider migrating to a push-based instead of subscription-based model
       - Config v2
+        - [x] Bidirectional links
         - [ ] Topology changes during runtime
           - [ ] Nodes can join the cluster by connecting to any cluster node
             - [ ] it gets a list of all known nodes and establishes replication links
             - [ ] concurrency control
-        - [ ] Bidirectional links
-      - Distribution
-          - [x] When a consumer group receives a message, it will be forwarded to replication receivers
-          - [x] The replication receiver feeds all messages into its own replicated consumer groups
-          - [x] Delivered messages are deleted cluster-wide
+          - Distribution
+              - [x] When a consumer group receives a message, it will be forwarded to replication receivers
+              - [x] The replication receiver feeds all messages into its own replicated consumer groups
+              - [x] Delivered messages are deleted cluster-wide
     - [ ] Nodes without clients continue receiving replicated messages (for HA) but delegate their message distribution
       responsibilities to other nodes. (Otherwise these messages would get stuck in the node)
     - [ ] Cluster organizes the division of labour automatically

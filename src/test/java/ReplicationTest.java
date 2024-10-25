@@ -26,9 +26,7 @@ class ReplicationTest {
     @BeforeEach
     void beforeEach() throws IOException, InterruptedException {
         broker1 = new Broker();
-        broker1.setRemoteReplicationProviderAddresses(
-                List.of(new InetSocketAddress("localhost", REPLICATION_PORT_BROKER_2)));
-        broker1.setLocalReplicationProviderPort(REPLICATION_PORT_BROKER_1);
+        broker1.setClusterEntryLocalPort(REPLICATION_PORT_BROKER_1);
         broker1.setMessageDeliveryFilter(0);
         Thread.ofVirtual().start(() -> {
             try {
@@ -37,10 +35,10 @@ class ReplicationTest {
                 throw new RuntimeException(e);
             }
         });
+        Thread.sleep(100);
         broker2 = new Broker();
-        broker2.setRemoteReplicationProviderAddresses(
-                List.of(new InetSocketAddress("localhost", REPLICATION_PORT_BROKER_1)));
-        broker2.setLocalReplicationProviderPort(REPLICATION_PORT_BROKER_2);
+        broker2.joinCluster(new InetSocketAddress("localhost", REPLICATION_PORT_BROKER_1));
+        broker2.setClusterEntryLocalPort(REPLICATION_PORT_BROKER_2);
         broker2.setMessageDeliveryFilter(1);
         Thread.ofVirtual().start(() -> {
             try {
@@ -125,8 +123,9 @@ class ReplicationTest {
     }
 
     @Test
-    @DisplayName("N1 receives messages for CG1 and CG2 of topic T1. Currently no subscriptions for that CGs, therefore messages are only stored and not distributed. "
-            + "Then, C1 and C4 appear, subscribe to CG1 and CG2. Messages get consumed on N1")
+    @DisplayName(
+            "N1 receives messages for CG1 and CG2 of topic T1. Currently no subscriptions for that CGs, therefore messages are only stored and not distributed. "
+                    + "Then, C1 and C4 appear, subscribe to CG1 and CG2. Messages get consumed on N1")
     void test4() throws IOException, InterruptedException {
         // prepare N2 as replication-message producer
         client2.subscribe("t1", "cg1");
@@ -143,11 +142,9 @@ class ReplicationTest {
         //TODO now, revert and remove the idea with the virtual consumergroup
 
         // add C1 and C2
-//        var client4 = new Client(CLIENT_PORT_BROKER_1, "C4");
-//        client1.subscribe("t1", "cg1");
-//        client4.subscribe("t1", "cg2");
-
-
+        //        var client4 = new Client(CLIENT_PORT_BROKER_1, "C4");
+        //        client1.subscribe("t1", "cg1");
+        //        client4.subscribe("t1", "cg2");
 
     }
 
