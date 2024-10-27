@@ -124,7 +124,7 @@ class ReplicationTest {
 
     @Test
     @DisplayName(
-            "N1 receives messages for CG1 and CG2 of topic T1. Currently no subscriptions for that CGs, therefore messages are only stored and not distributed. "
+            "N1 receives messages for CG1 and CG2 of topic T1 that should be distributed by N2. Currently no subscriptions for that CGs, therefore messages are only stored and not distributed. "
                     + "Then, C1 and C4 appear, subscribe to CG1 and CG2. Messages get consumed on N1")
     void test4() throws IOException, InterruptedException {
         // prepare N2 as replication-message producer
@@ -132,19 +132,24 @@ class ReplicationTest {
         client2.subscribe("t1", "cg2");
         client2.closeSocket();
         var client3 = new Client(CLIENT_PORT_BROKER_2, "C3");
-        client3.publish("t1", "My string data");
+        client3.publish("t1", "My string data1");
 
         // assert message has been replicated to broker 2
         Thread.sleep(100);
-        assertEquals(2, broker2.getTotalMessageCount()); // message is stored twice. one for each sub
-        assertEquals(2, broker1.getTotalMessageCount()); // we have a duplicate in the replication target
+        assertEquals(2, broker2.getTotalMessageCount()); // message is stored twice. one for each cg
+        assertEquals(2, broker1.getTotalMessageCount());
 
-        //TODO now, revert and remove the idea with the virtual consumergroup
+        var client4 = new Client(CLIENT_PORT_BROKER_1, "C4");
+        client1.subscribe("t1", "cg1");
+        client4.subscribe("t1", "cg2");
 
-        // add C1 and C2
-        //        var client4 = new Client(CLIENT_PORT_BROKER_1, "C4");
-        //        client1.subscribe("t1", "cg1");
-        //        client4.subscribe("t1", "cg2");
+        Thread.sleep(100);
+        assertEquals(1,client1.getConsumedMessages("t1").size());
+        assertEquals(1,client4.getConsumedMessages("t1").size());
+
+        Thread.sleep(100);
+        assertEquals(0, broker2.getTotalMessageCount());
+        assertEquals(0, broker1.getTotalMessageCount());
 
     }
 
