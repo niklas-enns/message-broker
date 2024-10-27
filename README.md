@@ -17,8 +17,6 @@ This message broker can
 - [x] In-memory message queueing
     - After connecting, clients will receive messages of their subscriptions that arrived while the clients were
       disconnected
-- [ ] Persistent queueing
-    - During operation, the broker can be restarted and the processing continues without loss of messages
 - [x] Cancel Subscriptions
 
 ## Quality Backlog
@@ -55,6 +53,10 @@ This message broker can
         - [x] Subscription requests (consumer group to topic) have to be replicated
         - [ ] Subscription requests (client to consumer group) have to be replicated for recognition on connect
         - [ ] Unsubscribe requests (client to consumer group) have to be replicated
+
+## Limitations
+* Message order is preserved only roughly
+* No persistence
 
 ## Lessons Learned
 * Networking and concurrency increase the complexity (yes, we all knew this before, but I _felt_ it during development :-))
