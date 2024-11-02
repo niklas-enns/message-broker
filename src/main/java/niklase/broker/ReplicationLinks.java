@@ -121,11 +121,10 @@ public class ReplicationLinks {
                 topics.deleteMessage(parts[2], parts[1], parts[3]);
                 break;
             case "REPLICATED_MESSAGE": // REPLICATED_MESSAGE,<consumer group name>,<topic name>,<message>
-                topics.createConsumerGroupForTopic(parts[2], parts[1]);
                 topics.storeInConsumerGroup(parts[1], "MESSAGE," + parts[2] + "," + parts[3]);
                 break;
             case "REPLICATED_SUBSCRIPTION_REQUEST":
-                topics.subscribeConsumerGroupToTopic(parts[1], parts[2], false);
+                topics.subscribeConsumerGroupToTopic(parts[1], parts[2]);
                 break;
             default:
                 logger.warn("", new IllegalArgumentException("Unknown message type in message: " + line));

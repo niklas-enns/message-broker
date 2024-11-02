@@ -13,38 +13,27 @@ public class Topics {
     private static final Logger logger = LoggerFactory.getLogger(Topics.class);
 
     private final ReplicationLinks replicationLinks;
-    private MessageProcessingFilter messageProcessingFilter;
+    private final ConsumerGroupFactory consumerGroupFactory;
 
     private HashMap<String, Set<ConsumerGroup>> consumerGroups = new HashMap<>();
-    private DeliveryPropagator deliveryPropagator;
 
-    public Topics(final ReplicationLinks replicationLinks, final MessageProcessingFilter messageProcessingFilter) {
+    public Topics(final ReplicationLinks replicationLinks, final ConsumerGroupFactory consumerGroupFactory) {
         this.replicationLinks = replicationLinks;
-        this.messageProcessingFilter = messageProcessingFilter;
+        this.consumerGroupFactory = consumerGroupFactory;
     }
 
-    public synchronized void subscribeConsumerGroupToTopic(final String topic, final String consumerGroupName,
-            final boolean replicate) {
-        if (replicate) {
-            replicationLinks.acceptSubscriptionRequest(topic, consumerGroupName);
-        }
+    public synchronized void subscribeConsumerGroupToTopic(final String topic, final String consumerGroupName) {
         var consumerGroupSetOfTopic = consumerGroups.get(topic);
         if (consumerGroupSetOfTopic == null) {
             var consumerGroupSet = new HashSet<ConsumerGroup>();
-            consumerGroupSet.add(createConsumerGroup(consumerGroupName));
+            consumerGroupSet.add(consumerGroupFactory.create(consumerGroupName));
             consumerGroups.put(topic, consumerGroupSet);
         } else {
-            if (consumerGroupSetOfTopic.contains(new ConsumerGroup(consumerGroupName, messageProcessingFilter))) {
+            if (consumerGroupSetOfTopic.contains(new ConsumerGroup(consumerGroupName, null, null))) {
                 // already subscribed
             }
-            consumerGroupSetOfTopic.add(createConsumerGroup(consumerGroupName));
+            consumerGroupSetOfTopic.add(consumerGroupFactory.create(consumerGroupName));
         }
-    }
-
-    private ConsumerGroup createConsumerGroup(final String consumerGroupName) {
-        var consumerGroup = new ConsumerGroup(consumerGroupName, messageProcessingFilter);
-        consumerGroup.setPropagateSuccessfulMessageDelivery(this.deliveryPropagator);
-        return consumerGroup;
     }
 
     public ConsumerGroup getConsumerGroupByName(final String consumerGroupName) {
@@ -78,10 +67,6 @@ public class Topics {
         this.byTopic(topic).removeIf(ConsumerGroup::isEmpty);
     }
 
-    public void setPropagateSuccessfulMessageDelivery(DeliveryPropagator deliveryPropagator) {
-        this.deliveryPropagator = deliveryPropagator;
-    }
-
     public void deleteMessage(String topicName, String consumerGroup, final String message) {
         //TODO handle case topic does not exist
         this.getConsumerGroupByName(consumerGroup).delete("MESSAGE," + topicName + "," + message);
@@ -89,10 +74,6 @@ public class Topics {
 
     public void flush(final String consumerGroupName) {
         this.getConsumerGroupByName(consumerGroupName).flush();
-    }
-
-    public void createConsumerGroupForTopic(final String topic, final String consumerGroup) {
-        this.subscribeConsumerGroupToTopic(topic, consumerGroup, true);
     }
 
     public void storeInConsumerGroup(final String consumerGroup, final String envelope) {

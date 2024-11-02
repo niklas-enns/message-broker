@@ -115,10 +115,6 @@ public class Client {
         this.socketToBroker.close();
     }
 
-    public void hook() {
-        // debugging
-    }
-
     public void unsubscribe(final String topic) throws IOException, InterruptedException {
         send("UNSUB_REQ," + topic);
         logger.info("Sent UNSUB_REQ to broker, waiting for OK");

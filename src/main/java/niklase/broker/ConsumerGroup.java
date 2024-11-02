@@ -14,16 +14,17 @@ public class ConsumerGroup {
     private static final Logger logger = LoggerFactory.getLogger(ConsumerGroup.class);
     private final String name;
     private final MessageProcessingFilter messageProcessingFilter;
+    private final ReplicationLinks replicationLinks;
     private List<ClientProxy> clients = new LinkedList<>();
     private ClientProxy current = null;
 
     private List<String> messages = new LinkedList<>();
-    private DeliveryPropagator deliveryPropagator = (String string, String string2) -> {
-    };
 
-    public ConsumerGroup(final String name, final MessageProcessingFilter messageProcessingFilter) {
+    public ConsumerGroup(final String name, final MessageProcessingFilter messageProcessingFilter,
+            final ReplicationLinks replicationLinks) {
         this.name = name;
         this.messageProcessingFilter = messageProcessingFilter;
+        this.replicationLinks = replicationLinks;
     }
 
     public synchronized void add(final ClientProxy clientProxy) {
@@ -64,7 +65,7 @@ public class ConsumerGroup {
                     }
                     logger.info("<<< >>> forwarded [{}] to [{}@{}]", envelope, clientProxy.getName(),
                             clientProxy.socketToClient().getPort());
-                    deliveryPropagator.accept(envelope, name); //TODO error handling??
+                    replicationLinks.acceptMessageDeliveryConfirmation(envelope, name);
                     return true;
                 });
                 logger.info("Flushing {} finished without Exceptions. {} message(s) are left", clientProxy.getName(),
@@ -150,10 +151,6 @@ public class ConsumerGroup {
 
     public long getTotalMessageCount() {
         return messages.size();
-    }
-
-    public void setPropagateSuccessfulMessageDelivery(DeliveryPropagator deliveryPropagator) {
-        this.deliveryPropagator = deliveryPropagator;
     }
 
     public void delete(final String envelopeToDelete) {

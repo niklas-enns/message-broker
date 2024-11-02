@@ -21,13 +21,11 @@ public class Broker {
 
     private ReplicationLinks replicationLinks = new ReplicationLinks();
     private MessageProcessingFilter messageProcessingFilter = new MessageProcessingFilter();
-    private Topics topics = new Topics(replicationLinks, messageProcessingFilter);
+    private Topics topics = new Topics(replicationLinks,
+            new ConsumerGroupFactory(messageProcessingFilter, replicationLinks));
 
     public void run(final int port) throws IOException {
         logger.info("Starting Message Broker");
-        topics.setPropagateSuccessfulMessageDelivery(
-                (envelope, consumerGroup) -> replicationLinks.acceptMessageDeliveryConfirmation(envelope,
-                        consumerGroup));
         replicationLinks.startAcceptingIncomingReplicationLinkConnections(topics);
         try {
             Thread.sleep(100);
@@ -81,7 +79,8 @@ public class Broker {
                         if (parts.length == 3) {
                             consumerGroupName = parts[2];
                         }
-                        topics.subscribeConsumerGroupToTopic(topic, consumerGroupName, true);
+                        replicationLinks.acceptSubscriptionRequest(topic, consumerGroupName);
+                        topics.subscribeConsumerGroupToTopic(topic, consumerGroupName);
                         topics.getConsumerGroupByName(consumerGroupName)
                                 .add(new ClientProxy(clientName, socketWithClient));
                         new PrintStream(socketWithClient.getOutputStream(), true).println(

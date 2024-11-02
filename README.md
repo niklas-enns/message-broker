@@ -61,8 +61,10 @@ This message broker can
 ## Lessons Learned
 * Networking and concurrency increase the complexity (yes, we all knew this before, but I _felt_ it during development :-))
 * My development approach "High-Level Unit Testing with TDD" is great for the cases that which you (can) think up upfront.
-    * However, there are many cases which are not the leading cases for the happy path, but which have to be covered aswell
+    * However, there are many cases which are not the leading cases for the happy path, but which have to be covered as well
+    * Unexpected side effects might not be not discovered with TDD (e.g. unwanted duplicates)
 * Changing cross-cutting concerns or redistributing responsibilities across classes **on demand** (the opposite strategy of designing them upfront) is possible
   * if you're the single author of a codebase. If multiple persons are working on the same codebase in parallel, things might work differently
 * Interfaces on the level of the programming language can be expressed good enough with types and code comments.
   * For replication, network communication gets involved... How and where should this interface be documented?
+* Class Diagrams help to visualize and question dependencies (if classes have meaningful names)
