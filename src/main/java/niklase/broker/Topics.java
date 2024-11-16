@@ -29,9 +29,6 @@ public class Topics {
             consumerGroupSet.add(consumerGroupFactory.create(consumerGroupName));
             consumerGroups.put(topic, consumerGroupSet);
         } else {
-            if (consumerGroupSetOfTopic.contains(new ConsumerGroup(consumerGroupName, null, null))) {
-                // already subscribed
-            }
             consumerGroupSetOfTopic.add(consumerGroupFactory.create(consumerGroupName));
         }
     }
