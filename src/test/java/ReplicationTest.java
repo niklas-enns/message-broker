@@ -25,7 +25,7 @@ class ReplicationTest {
 
     @BeforeEach
     void beforeEach() throws IOException, InterruptedException {
-        broker1 = new Broker();
+        broker1 = new Broker("N1");
         broker1.setClusterEntryLocalPort(REPLICATION_PORT_BROKER_1);
         broker1.setMessageDeliveryFilter(0);
         Thread.ofVirtual().start(() -> {
@@ -36,7 +36,7 @@ class ReplicationTest {
             }
         });
         Thread.sleep(100);
-        broker2 = new Broker();
+        broker2 = new Broker("N2");
         broker2.joinCluster(new InetSocketAddress("localhost", REPLICATION_PORT_BROKER_1));
         broker2.setClusterEntryLocalPort(REPLICATION_PORT_BROKER_2);
         broker2.setMessageDeliveryFilter(1);

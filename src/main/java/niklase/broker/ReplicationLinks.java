@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +21,9 @@ public class ReplicationLinks {
 
     private int clusterEntryLocalPort;
     private ServerSocket replicationLinkServerSocket;
-    private List<Socket> otherNodes = new LinkedList<>();
+    private List<Node> otherNodes = new LinkedList<>();
     private Topics topics;
+    private String nodeId;
 
     public void startAcceptingIncomingReplicationLinkConnections(final Topics topics) {
         this.topics = topics;
@@ -31,11 +34,11 @@ public class ReplicationLinks {
                 while (true) {
                     try {
                         var socketWithOtherNode = replicationLinkServerSocket.accept();
-                        logger.info("Another node connected to this one");
-                        this.otherNodes.add(socketWithOtherNode);
+
                         Thread.ofVirtual().start(() -> {
+                            logger.info("Another node connected to this one");
                             try {
-                                handleIncomingMessages(socketWithOtherNode);
+                                handleIncomingMessages(socketWithOtherNode, null);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -52,6 +55,14 @@ public class ReplicationLinks {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private String getNodes() {
+        var string = "";
+        for (final Node otherNode : this.otherNodes) {
+            string += otherNode.id + "," + otherNode.getAddressForNewReplicationLinks() + ",";
+        }
+        return string;
     }
 
     public void setClusterEntryLocalPort(final int clusterEntryLocalPort) {
@@ -89,7 +100,7 @@ public class ReplicationLinks {
         logger.info("Sending {} to {}", line, otherNodes);
         this.otherNodes.forEach(node -> {
             try {
-                new PrintStream(node.getOutputStream()).println(line);
+                new PrintStream(node.getSocketOfEstablishedReplicationLink().getOutputStream()).println(line);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -97,24 +108,29 @@ public class ReplicationLinks {
     }
 
     public void establishLink(final InetSocketAddress clusterEntryAddress) {
-        logger.info("Joining cluster via {}", clusterEntryAddress);
+        logger.info("Establishing replication link to {}", clusterEntryAddress);
         Thread.ofVirtual().start(() -> {
             try (var socketToOtherNode = new Socket();) {
                 socketToOtherNode.connect(clusterEntryAddress);
-                this.otherNodes.add(socketToOtherNode);
-                handleIncomingMessages(socketToOtherNode);
+                new PrintStream(socketToOtherNode.getOutputStream()).println(
+                        "INFO," + this.nodeId + ",localhost:"
+                                + this.clusterEntryLocalPort); //INFO,<node id>,<cluster entry ip:port>
+                handleIncomingMessages(socketToOtherNode, clusterEntryAddress);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    private void handleIncomingMessages(final Socket socketToOtherNode) throws IOException {
-        var bufferedReader = new BufferedReader(new InputStreamReader(socketToOtherNode.getInputStream()));
+    private void handleIncomingMessages(final Socket socket, final InetSocketAddress clusterEntryAddress)
+            throws IOException {
+        var bufferedReader = new BufferedReader(
+                new InputStreamReader(socket.getInputStream()));
+        logger.info("Listening for incoming messages from other node: {}", socket);
         while (true) {
-            logger.info("Listening for incoming messages from other node: {}", socketToOtherNode);
+            logger.info("{} is waiting for new messages from other node", this.nodeId);
             String line = bufferedReader.readLine();
-            logger.info("Got message from other broker: [{}]", line);
+            logger.info("{} Got message from other broker: [{}]", this.nodeId, line);
             var parts = line.split(",");
             switch (parts[0]) {
             case "DELIVERED":
@@ -126,9 +142,47 @@ public class ReplicationLinks {
             case "REPLICATED_SUBSCRIPTION_REQUEST":
                 topics.subscribeConsumerGroupToTopic(parts[1], parts[2]);
                 break;
+            case "WELCOME_TO_THE_HOOD": //WELCOME_TO_THE_HOOD,<id of welcomer>,<id of other node>,<ip of other node>:<port of other node>
+                this.otherNodes.add(new Node(parts[1], socket, clusterEntryAddress));
+                if (parts.length >= 3) {
+                    connectToUnconnectedNodes(parts[2], parts[3]);
+                }
+                break;
+            case "INFO": //INFO,<node id>,<cluster entry ip:port>
+                var addressParts = parts[2].split(":");
+                var enteringNode = new Node(parts[1], socket,
+                        new InetSocketAddress(addressParts[0], Integer.parseInt(addressParts[1])));
+
+                var addresses = getNodes();
+                new PrintStream(socket.getOutputStream()).println(
+                        "WELCOME_TO_THE_HOOD," + this.nodeId + ","
+                                + addresses); //WELCOME_TO_THE_HOOD,<id of welcomer>,<id of other node>,<ip of other node>:<port of other node>
+                this.otherNodes.add(enteringNode);
+                System.out.println(">> WELCOME_TO_THE_HOOD");
+                break;
             default:
                 logger.warn("", new IllegalArgumentException("Unknown message type in message: " + line));
             }
         }
+    }
+
+    private void connectToUnconnectedNodes(final String id, final String address) {
+        logger.info("Discovered node {} at {}", id, address);
+        if (!otherNodes.contains(new Node(id, null, null))) {
+            var ipPortParts = address.split(":");
+            establishLink(new InetSocketAddress(ipPortParts[0].split("/")[1], Integer.parseInt(ipPortParts[1]))); //TODO
+        } else {
+            logger.info("Skipping {}, because replication link already established", id);
+        }
+    }
+
+    public Set<String> getIdsOfAllnodesWithEstablishedReplicationLinks() {
+        return this.otherNodes.stream()
+                .map(n -> n.id)
+                .collect(Collectors.toSet());
+    }
+
+    public void setNodeId(final String nodeId) {
+        this.nodeId = nodeId;
     }
 }

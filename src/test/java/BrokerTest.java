@@ -18,7 +18,7 @@ class BrokerTest {
 
     @BeforeEach
     void beforeEach() throws IOException, InterruptedException {
-        broker = new Broker();
+        broker = new Broker("N1");
         Thread.ofVirtual().start(() -> {
             try {
                 broker.run(PORT);

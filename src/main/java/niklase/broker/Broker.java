@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 public class Broker {
     private static final Logger logger = LoggerFactory.getLogger(Broker.class);
+    private final String nodeId;
 
     private ServerSocket serverSocketForClients = null;
 
@@ -24,8 +25,13 @@ public class Broker {
     private Topics topics = new Topics(replicationLinks,
             new ConsumerGroupFactory(messageProcessingFilter, replicationLinks));
 
+    public Broker(final String nodeId) {
+        this.nodeId = nodeId;
+        replicationLinks.setNodeId(nodeId);
+    }
+
     public void run(final int port) throws IOException {
-        logger.info("Starting Message Broker");
+        logger.info("Starting Message Broker {}", this.nodeId);
         replicationLinks.startAcceptingIncomingReplicationLinkConnections(topics);
         try {
             Thread.sleep(100);
@@ -145,5 +151,9 @@ public class Broker {
 
     public long getTotalMessageCount() {
         return this.getConsumerGroups().stream().mapToLong(ConsumerGroup::getTotalMessageCount).sum();
+    }
+
+    public Set<String> getIdsOfAllnodesWithEstablishedReplicationLinks() {
+        return replicationLinks.getIdsOfAllnodesWithEstablishedReplicationLinks();
     }
 }
