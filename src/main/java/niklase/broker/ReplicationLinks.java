@@ -170,7 +170,7 @@ public class ReplicationLinks {
         logger.info("Discovered node {} at {}", id, address);
         if (!otherNodes.contains(new Node(id, null, null))) {
             var ipPortParts = address.split(":");
-            establishLink(new InetSocketAddress(ipPortParts[0].split("/")[1], Integer.parseInt(ipPortParts[1]))); //TODO
+            establishLink(new InetSocketAddress(ipPortParts[0].split("/")[1], Integer.parseInt(ipPortParts[1])));
         } else {
             logger.info("Skipping {}, because replication link already established", id);
         }
