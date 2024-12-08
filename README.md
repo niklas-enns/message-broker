@@ -57,6 +57,25 @@ This message broker can
 * Message order is preserved only roughly
 * No persistence
 
+# Concepts
+## Leaderless Replication
+Leaderless replication means, there is no central instance which decides or coordinates the data replication. 
+It's much more like a peer-to-peer architecture where all nodes accept incoming data from clients and replicate that data
+to other nodes. This increases the flexibility of a cluster. In general, this leads to a lower consistency. In this
+particular case, it sacrifices the consistency of the message _ordering_.
+
+## Division of Labour
+When all nodes would deliver all messages to all of their clients, a message that gets submitted to the cluster, would be
+delivered multiple times, because all messages are replicated within the cluster. As messages should be delivered (ideally)
+exactly once within a consumer group, a new question arises: which messages should a node deliver to its clients?
+
+Based on modular hashing, every node is able to determine if it should distribute a message or not. For example,
+in a cluster with three distributor nodes, node N1 will be responsible for distributing all messages whose hashcode mod 3 is equals to zero.
+N2 will distribute all messages whose hashcode mod 3 is equals to one and N3 distributes the messages whose hashcode mod 3 equals two.
+
+Thus, although all messages are replicated within the cluster, the disjoint distribution to clients prevents multiple delivery of messages.
+
+
 ## Lessons Learned
 * Networking and concurrency increase the complexity (yes, we all knew this before, but I _felt_ it during development :-))
 * My development approach "High-Level Unit Testing with TDD" is great for the cases that which you (can) think up upfront.
