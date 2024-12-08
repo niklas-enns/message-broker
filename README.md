@@ -6,9 +6,7 @@ This message broker can
 * via separate topics
 * with tolerance for temporary connection interruptions to clients
 * with load balancing on Consumer Groups
-* with high availability with Leaderless Replication
-
-.
+* with high availability based on Leaderless Replication
 
 ## Feature Backlog
 
