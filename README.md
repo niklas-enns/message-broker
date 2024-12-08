@@ -32,15 +32,13 @@ This message broker can
       - Config v2
         - [x] Bidirectional links
         - [ ] Topology changes during runtime
-          - [ ] Nodes can join the cluster by connecting to any cluster node
+          - [x] Nodes can join the cluster by connecting to any cluster node
             - [x] it gets a list of all known nodes and establishes replication links
-            - [ ] concurrency control
-          - Distribution
-              - [x] When a consumer group receives a message, it will be forwarded to replication receivers
-              - [x] The replication receiver feeds all messages into its own replicated consumer groups
-              - [x] Delivered messages are deleted cluster-wide
-    - [ ] Nodes without clients continue receiving replicated messages (for HA) but delegate their message distribution
-      responsibilities to other nodes. (Otherwise these messages would get stuck in the node)
+            - [ ] Ensure a high consistency of cluster state
+      - [x] Message Replication
+        - [x] When a consumer group receives a message, it will be forwarded to replication receivers
+        - [x] The replication receiver feeds all messages into its own replicated consumer groups
+        - [x] Delivered messages are deleted cluster-wide
     - [ ] Cluster organizes the division of labour automatically
       - No manual configuration by admin needed
       - [ ] Topology changes for the distribution cluster
@@ -48,7 +46,7 @@ This message broker can
         - [ ] A node looses its last client of a consumer group
         - [ ] A new node joins the cluster
         - [ ] A node leaves the cluster
-    - [ ] (On failure) clients connect to any node and message processing continues
+    - [ ] Scenario: (On failure) clients connect to any node and message processing continues
         - [x] Subscription requests (consumer group to topic) have to be replicated
         - [ ] Subscription requests (client to consumer group) have to be replicated for recognition on connect
         - [ ] Unsubscribe requests (client to consumer group) have to be replicated
