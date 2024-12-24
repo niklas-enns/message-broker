@@ -14,9 +14,11 @@ graph TB;
     subgraph one
     C1((C1))-->N1;
     C2((C2))-->N1;
+    end
     subgraph two
     C3((C3))-->N2;
     C4((C4))-->N2;
+    end
 ```
 
 ## Feature Backlog
