@@ -11,9 +11,9 @@ This message broker can
 ```mermaid
 graph TD;
     C1((C1))-->N1;
-    C2-->N1;
-    C3-->N2;
-    C4-->N2;
+    C2((C2))-->N1;
+    C3((C3))-->N2;
+    C4((C4))-->N2;
     N1-->N2
 ```
 
