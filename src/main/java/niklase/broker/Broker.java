@@ -33,12 +33,6 @@ public class Broker {
     public void run(final int port) throws IOException {
         logger.info("Starting Message Broker {}", this.nodeId);
         replicationLinks.startAcceptingIncomingReplicationLinkConnections(topics);
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
         logger.info("Opening socket for clients on port {}", port);
         this.serverSocketForClients = new ServerSocket(port);
         while (true) {
@@ -77,6 +71,7 @@ public class Broker {
                     case "HI_MY_NAME_IS":
                         clientName = parts[1];
                         final String finalClientName = clientName;
+                        //TODO is it better to have another access to clientsProxies?
                         getConsumerGroups().forEach(
                                 consumerGroup -> consumerGroup.setSocket(finalClientName, socketWithClient));
                         break;
