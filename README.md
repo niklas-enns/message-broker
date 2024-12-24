@@ -10,7 +10,7 @@ This message broker can
 
 ```mermaid
 graph TD;
-    C1-->N1;
+    C1()-->N1;
     C2-->N1;
     C3-->N2;
     C4-->N2;
