@@ -17,11 +17,11 @@ graph LR;
     C1((Client 1))<-->N1;
     C2((Client 2))<-->N1;
     end
-    subgraph two
+    subgraph "subnet two"
     C3((Client 3))<-->N2;
     C4((Client 4))<-->N2;
     end
-    subgraph three
+    subgraph "subnet three"
     N3[Node 3]
     end
 ```
