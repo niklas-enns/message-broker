@@ -10,7 +10,7 @@ This message broker can
 
 ```mermaid
 graph TB;
-    N1[Node 1]<-->N2
+    N1[Node 1]<-->N2[Node 2]
     subgraph one
     C1((Client 1))-->N1;
     C2((Client 2))-->N1;
