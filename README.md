@@ -13,10 +13,10 @@ graph LR;
     N1[Node 1]<-->|Replication Link|N2[Node 2]
     N1[Node 1]-->|Replication Link|N3[Node 3]
     N2-->|Replication Link|N3
-    C1((Client 1))<-->N1;
-    C2((Client 2))<-->N1;
-    C3((Client 3))<-->N2;
-    C4((Client 4))<-->N2;
+    C1((Client 1))<-->|Messages|N1;
+    C2((Client 2))<-->|Messages|N1;
+    C3((Client 3))<-->|Messages|N2;
+    C4((Client 4))<-->|Messages|N2;
     N3[Node 3]
 ```
 
