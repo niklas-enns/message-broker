@@ -8,6 +8,15 @@ This message broker can
 * with load balancing on Consumer Groups
 * with high availability based on Leaderless Replication
 
+```mermaid
+graph TD;
+    C1-->N1;
+    C2-->N1;
+    C3-->N2;
+    C4-->N2;
+    N1-->N2
+```
+
 ## Feature Backlog
 
 - [x] Topics
@@ -71,6 +80,14 @@ N2 will distribute all messages whose hashcode mod 3 is equals to one and N3 dis
 
 Thus, although all messages are replicated within the cluster, the disjoint distribution to clients prevents multiple delivery of messages.
 
+## Glossary
+* Client
+  * Publishes or consumes messages
+* Node
+  * A process running message broker
+* Topic
+* ConsumerGroup
+    * a set of Clients subscribed to a Topic
 
 ## Lessons Learned
 * Networking and concurrency increase the complexity (yes, we all knew this before, but I _felt_ it during development :-))
