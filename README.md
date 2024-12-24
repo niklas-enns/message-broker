@@ -10,14 +10,14 @@ This message broker can
 
 ```mermaid
 graph TB;
-    N1<-->N2
+    N1[Node 1]<-->N2
     subgraph one
-    C1((C1))-->N1;
-    C2((C2))-->N1;
+    C1((Client 1))-->N1;
+    C2((Client 2))-->N1;
     end
     subgraph two
-    C3((C3))-->N2;
-    C4((C4))-->N2;
+    C3((Client 3))-->N2;
+    C4((Client 4))-->N2;
     end
 ```
 
