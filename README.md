@@ -14,7 +14,7 @@ graph TD;
     C2((C2))-->N1;
     C3((C3))-->N2;
     C4((C4))-->N2;
-    N1-->N2
+    N1<-->N2
 ```
 
 ## Feature Backlog
