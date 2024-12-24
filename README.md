@@ -10,9 +10,9 @@ This message broker can
 
 ```mermaid
 graph LR;
-    N1[Node 1]<-->N2[Node 2]
-    N1[Node 1]-->N3[Node 3]
-    N2-->N3
+    N1[Node 1]<-->|Replication Link|N2[Node 2]
+    N1[Node 1]-->|Replication Link|N3[Node 3]
+    N2-->|Replication Link|N3
     C1((Client 1))<-->N1;
     C2((Client 2))<-->N1;
     C3((Client 3))<-->N2;
