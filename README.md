@@ -9,7 +9,7 @@ This message broker can
 * with high availability based on Leaderless Replication
 
 ```mermaid
-graph TB;
+graph LR;
     N1[Node 1]<-->N2[Node 2]
     N1[Node 1]<-->N3[Node 3]
     N2<-->N3
