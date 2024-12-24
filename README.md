@@ -11,6 +11,8 @@ This message broker can
 ```mermaid
 graph TB;
     N1[Node 1]<-->N2[Node 2]
+    N1[Node 1]<-->N3[Node 3]
+    N1[Node 2]<-->N3[Node 3]
     subgraph one
     C1((Client 1))<-->N1;
     C2((Client 2))<-->N1;
@@ -18,6 +20,9 @@ graph TB;
     subgraph two
     C3((Client 3))<-->N2;
     C4((Client 4))<-->N2;
+    end
+    subgraph three
+    N3[Node 3]
     end
 ```
 
