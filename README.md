@@ -13,17 +13,11 @@ graph TB;
     N1[Node 1]<-->N2[Node 2]
     N1[Node 1]<-->N3[Node 3]
     N2<-->N3
-    subgraph one
     C1((Client 1))<-->N1;
     C2((Client 2))<-->N1;
-    end
-    subgraph two
     C3((Client 3))<-->N2;
     C4((Client 4))<-->N2;
-    end
-    subgraph three
     N3[Node 3]
-    end
 ```
 
 ## Feature Backlog
