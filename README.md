@@ -11,11 +11,11 @@ This message broker can
 ```mermaid
 graph TB;
     N1<-->N2
-    subgraph one
+    subgraph
     C1((C1))-->N1;
     C2((C2))-->N1;
     end
-    subgraph two
+    subgraph
     C3((C3))-->N2;
     C4((C4))-->N2;
     end
