@@ -10,9 +10,11 @@ This message broker can
 
 ```mermaid
 graph LR;
+    subgraph "cluster"
     N1[Node 1]<==>|Replication Link|N2[Node 2]
     N1[Node 1]==>|Replication Link|N3[Node 3]
     N2==>|Replication Link|N3
+    end
     C1((Client 1))<-->|Messages|N1;
     C2((Client 2))<-->|Messages|N1;
     C3((Client 3))<-->|Messages|N2;
