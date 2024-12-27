@@ -21,4 +21,10 @@ public class MessageStore {
         var messages = this.messages.get(topic);
         messages.add(message);
     }
+
+    public void deleteAllMessages() {
+        this.messages.forEach((s, strings) -> {
+            strings.clear();
+        });
+    }
 }

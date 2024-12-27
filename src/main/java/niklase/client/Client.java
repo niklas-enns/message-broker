@@ -124,4 +124,7 @@ public class Client {
         logger.info("Got UNSUB_RESP_OK from broker");
     }
 
+    public void deleteConsumedMessages() {
+        consumedMessages.deleteAllMessages();
+    }
 }
