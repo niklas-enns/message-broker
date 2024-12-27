@@ -13,10 +13,11 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public class Broker {
     private static final Logger logger = LoggerFactory.getLogger(Broker.class);
-    private final String nodeId;
+    private String nodeId;
 
     private ServerSocket serverSocketForClients = null;
 
@@ -31,7 +32,8 @@ public class Broker {
     }
 
     public void run(final int port) throws IOException {
-        logger.info("Starting Message Broker {}", this.nodeId);
+        MDC.put("nodeId", this.nodeId);
+        logger.info("Starting Message Broker");
         replicationLinks.startAcceptingIncomingReplicationLinkConnections(topics);
         logger.info("Opening socket for clients on port {}", port);
         this.serverSocketForClients = new ServerSocket(port);
@@ -50,6 +52,7 @@ public class Broker {
 
     private void startNewIncomingClientMessageHandler(final Socket socketWithClient) {
         Thread.ofVirtual().start(() -> {
+            MDC.put("nodeId", this.nodeId);
             var clientName = "";
             try {
                 var bufferedReaderFromClient =

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public class ReplicationLinks {
     private static final Logger logger = LoggerFactory.getLogger(ReplicationLinks.class);
@@ -28,6 +29,7 @@ public class ReplicationLinks {
     public void startAcceptingIncomingReplicationLinkConnections(final Topics topics) {
         this.topics = topics;
         Thread.ofVirtual().start(() -> {
+            MDC.put("nodeId", this.nodeId);
             logger.info("Opening cluster entry on port {}", clusterEntryLocalPort);
             try {
                 replicationLinkServerSocket = new ServerSocket(clusterEntryLocalPort);
@@ -36,6 +38,7 @@ public class ReplicationLinks {
                         var socketWithOtherNode = replicationLinkServerSocket.accept();
 
                         Thread.ofVirtual().start(() -> {
+                            MDC.put("nodeId", this.nodeId);
                             logger.info("Another node connected to this one");
                             try {
                                 handleIncomingMessages(socketWithOtherNode, null);
@@ -110,6 +113,7 @@ public class ReplicationLinks {
     public void establishLink(final InetSocketAddress clusterEntryAddress) {
         logger.info("Establishing replication link to {}", clusterEntryAddress);
         Thread.ofVirtual().start(() -> {
+            MDC.put("nodeId", this.nodeId);
             try (var socketToOtherNode = new Socket();) {
                 socketToOtherNode.connect(clusterEntryAddress);
                 new PrintStream(socketToOtherNode.getOutputStream()).println(
@@ -128,9 +132,9 @@ public class ReplicationLinks {
                 new InputStreamReader(socket.getInputStream()));
         logger.info("Listening for incoming messages from other node: {}", socket);
         while (true) {
-            logger.info("{} is waiting for new messages from other node", this.nodeId);
+            logger.info("waiting for new messages from other node");
             String line = bufferedReader.readLine();
-            logger.info("{} Got message from other broker: [{}]", this.nodeId, line);
+            logger.info("Got message from other broker: [{}]", line);
             var parts = line.split(",");
             switch (parts[0]) {
             case "DELIVERED":
