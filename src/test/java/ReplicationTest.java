@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.List;
 
 import niklase.broker.Broker;
 import niklase.client.Client;

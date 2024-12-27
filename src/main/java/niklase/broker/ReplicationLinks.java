@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,12 +20,19 @@ import org.slf4j.MDC;
 
 public class ReplicationLinks {
     private static final Logger logger = LoggerFactory.getLogger(ReplicationLinks.class);
+    private final MessageProcessingFilter messageProcessingFilter;
 
     private int clusterEntryLocalPort;
     private ServerSocket replicationLinkServerSocket;
     private List<Node> otherNodes = new LinkedList<>();
     private Topics topics;
     private String nodeId;
+    private int localDolRoll;
+
+    public ReplicationLinks(final MessageProcessingFilter messageProcessingFilter) {
+
+        this.messageProcessingFilter = messageProcessingFilter;
+    }
 
     public void startAcceptingIncomingReplicationLinkConnections(final Topics topics) {
         this.topics = topics;
@@ -164,6 +172,32 @@ public class ReplicationLinks {
                 this.otherNodes.add(enteringNode);
                 System.out.println(">> WELCOME_TO_THE_HOOD");
                 break;
+            case "REORG_DOL":
+                //TODO if this is node is participating in this consumerGroup
+                var cg = parts[2];
+                if (parts[1].equals("INIT")) {
+                    var otherNodesRoll = Integer.parseInt(parts[3]);
+                    var localRoll = new Random().nextInt();
+                    if (localRoll < otherNodesRoll) {
+                        System.out.println("I take message % 2 == 0");
+                        messageProcessingFilter.setModuloRemainder(0);
+                    } else {
+                        System.out.println("I take message % 2 == 1");
+                        messageProcessingFilter.setModuloRemainder(1);
+                    }
+                    this.sendToReplicationReceivers("REORG_DOL" + "," + "RESPONSE" + "," + cg + "," + localRoll);
+                }
+                if (parts[1].equals("RESPONSE")) {
+                    var otherNodesRoll = Integer.parseInt(parts[3]);
+                    if (this.localDolRoll < otherNodesRoll) {
+                        System.out.println("I take message % 2 == 0");
+                        messageProcessingFilter.setModuloRemainder(0);
+                    } else {
+                        System.out.println("I take message % 2 == 1");
+                        messageProcessingFilter.setModuloRemainder(1);
+                    }
+                }
+                break;
             default:
                 logger.warn("", new IllegalArgumentException("Unknown message type in message: " + line));
             }
@@ -180,7 +214,7 @@ public class ReplicationLinks {
         }
     }
 
-    public Set<String> getIdsOfAllnodesWithEstablishedReplicationLinks() {
+    public Set<String> getIdsOfAllNodesWithEstablishedReplicationLinks() {
         return this.otherNodes.stream()
                 .map(n -> n.id)
                 .collect(Collectors.toSet());
@@ -188,5 +222,10 @@ public class ReplicationLinks {
 
     public void setNodeId(final String nodeId) {
         this.nodeId = nodeId;
+    }
+
+    public void announceWillingnessToDistributeMessagesFor(final String consumerGroupName) {
+        this.localDolRoll = new Random().nextInt();
+        sendToReplicationReceivers("REORG_DOL," + "INIT" + "," + consumerGroupName + "," + this.localDolRoll);
     }
 }

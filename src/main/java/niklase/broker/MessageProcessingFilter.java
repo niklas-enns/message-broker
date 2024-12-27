@@ -17,13 +17,14 @@ public class MessageProcessingFilter {
 
     void setModuloRemainder(int moduloRemainder) {
         f = (envelope) -> {
-            if (Math.abs(envelope.hashCode() % COUNT_OF_MESSAGE_DISTRIBUTOR_NODES) == moduloRemainder) {
+            var calc = Math.abs(envelope.hashCode() % COUNT_OF_MESSAGE_DISTRIBUTOR_NODES);
+            if (calc == moduloRemainder) {
                 logger.info("Processing message {} with hashCode % 2 = {} and configured moduloRemainder {}", envelope,
-                        envelope.hashCode() % COUNT_OF_MESSAGE_DISTRIBUTOR_NODES, moduloRemainder);
+                        calc, moduloRemainder);
                 return true;
             }
             logger.info("Skipping message {} with hashCode % 2 = {} and configured moduloRemainder {}", envelope,
-                    envelope.hashCode() % COUNT_OF_MESSAGE_DISTRIBUTOR_NODES, moduloRemainder);
+                    calc, moduloRemainder);
             return false;
         };
     }

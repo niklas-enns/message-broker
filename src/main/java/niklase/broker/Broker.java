@@ -21,8 +21,8 @@ public class Broker {
 
     private ServerSocket serverSocketForClients = null;
 
-    private ReplicationLinks replicationLinks = new ReplicationLinks();
     private MessageProcessingFilter messageProcessingFilter = new MessageProcessingFilter();
+    private ReplicationLinks replicationLinks = new ReplicationLinks(messageProcessingFilter);
     private Topics topics = new Topics(replicationLinks,
             new ConsumerGroupFactory(messageProcessingFilter, replicationLinks));
 
@@ -86,7 +86,7 @@ public class Broker {
                         replicationLinks.acceptSubscriptionRequest(topic, consumerGroupName);
                         topics.subscribeConsumerGroupToTopic(topic, consumerGroupName);
                         topics.getConsumerGroupByName(consumerGroupName)
-                                .add(new ClientProxy(clientName, socketWithClient));
+                                .addConnectedClient(new ClientProxy(clientName, socketWithClient));
                         new PrintStream(socketWithClient.getOutputStream(), true).println(
                                 "SUB_RESP_OK," + topic + "," + consumerGroupName);
                         topics.flush(consumerGroupName); // if the topic already contains messages
@@ -152,6 +152,6 @@ public class Broker {
     }
 
     public Set<String> getIdsOfAllnodesWithEstablishedReplicationLinks() {
-        return replicationLinks.getIdsOfAllnodesWithEstablishedReplicationLinks();
+        return replicationLinks.getIdsOfAllNodesWithEstablishedReplicationLinks();
     }
 }

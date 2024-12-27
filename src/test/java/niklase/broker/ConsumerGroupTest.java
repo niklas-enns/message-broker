@@ -23,7 +23,7 @@ class ConsumerGroupTest {
     void gncpws1() {
         var consumerGroup = new ConsumerGroup("", messageProcessingFilter, replicationLinks);
         var c1 = new ClientProxy("c1", new Socket());
-        consumerGroup.add(c1);
+        consumerGroup.addConnectedClient(c1);
 
         assertEquals(c1, consumerGroup.getNextClientProxyWithSocket());
         assertEquals(c1, consumerGroup.getNextClientProxyWithSocket());
@@ -36,8 +36,8 @@ class ConsumerGroupTest {
         var c1 = new ClientProxy("c1", new Socket());
         var c2 = new ClientProxy("c2", new Socket());
 
-        consumerGroup.add(c1);
-        consumerGroup.add(c2);
+        consumerGroup.addConnectedClient(c1);
+        consumerGroup.addConnectedClient(c2);
 
         assertEquals(c1, consumerGroup.getNextClientProxyWithSocket());
         assertEquals(c2, consumerGroup.getNextClientProxyWithSocket());
@@ -52,8 +52,8 @@ class ConsumerGroupTest {
         var c1 = new ClientProxy("c1", new Socket());
         var c2 = new ClientProxy("c1", new Socket());
 
-        consumerGroup.add(c1);
-        consumerGroup.add(c2);
+        consumerGroup.addConnectedClient(c1);
+        consumerGroup.addConnectedClient(c2);
 
         assertEquals(c1, consumerGroup.getNextClientProxyWithSocket());
         assertEquals(c2, consumerGroup.getNextClientProxyWithSocket());

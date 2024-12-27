@@ -27,8 +27,11 @@ public class ConsumerGroup {
         this.replicationLinks = replicationLinks;
     }
 
-    public synchronized void add(final ClientProxy clientProxy) {
+    public synchronized void addConnectedClient(final ClientProxy clientProxy) {
         this.clients.add(clientProxy);
+        if (this.clients.stream().filter(clientProxy1 -> clientProxy1.socketToClient() != null).count() == 1) {
+            replicationLinks.announceWillingnessToDistributeMessagesFor(this.name);
+        }
     }
 
     public synchronized void accept(final String envelope) {
