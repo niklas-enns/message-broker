@@ -54,6 +54,9 @@ class ReorgOfDivisionOfLabourTest {
         var client2 = new Client(1600, "C2");
         client2.subscribe("topic1", "cg1");
         Thread.sleep(500); // await reorg of DoL
+        broker1.setMessageDeliveryFilter(1);
+        broker2.setMessageDeliveryFilter(0);
+        Thread.sleep(100);
         client1.deleteConsumedMessages();
 
         client1.publish("topic1", "My string data 1");
@@ -62,7 +65,6 @@ class ReorgOfDivisionOfLabourTest {
 
         Thread.sleep(100); // message distribution
 
-        //TODO fix flaky tests, because DOL is decided by a random number
         assertEquals("My string data 1", client1.getConsumedMessages("topic1").getFirst());
         assertEquals("My string data 2", client2.getConsumedMessages("topic1").getFirst());
         assertEquals("My string data 3", client1.getConsumedMessages("topic1").get(1));

@@ -30,7 +30,6 @@ public class ReplicationLinks {
     private int localDolRoll;
 
     public ReplicationLinks(final MessageProcessingFilter messageProcessingFilter) {
-
         this.messageProcessingFilter = messageProcessingFilter;
     }
 

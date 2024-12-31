@@ -26,7 +26,6 @@ class ReplicationTest {
     void beforeEach() throws IOException, InterruptedException {
         broker1 = new Broker("N1");
         broker1.setClusterEntryLocalPort(REPLICATION_PORT_BROKER_1);
-        broker1.setMessageDeliveryFilter(0);
         Thread.ofVirtual().start(() -> {
             try {
                 broker1.run(CLIENT_PORT_BROKER_1);
@@ -38,7 +37,6 @@ class ReplicationTest {
         broker2 = new Broker("N2");
         broker2.joinCluster(new InetSocketAddress("localhost", REPLICATION_PORT_BROKER_1));
         broker2.setClusterEntryLocalPort(REPLICATION_PORT_BROKER_2);
-        broker2.setMessageDeliveryFilter(1);
         Thread.ofVirtual().start(() -> {
             try {
                 broker2.run(CLIENT_PORT_BROKER_2);
@@ -61,6 +59,9 @@ class ReplicationTest {
     @DisplayName("Client receives a message via replication")
     void test0() throws IOException, InterruptedException {
         client2.subscribe("topic1");
+        Thread.sleep(100);
+        broker1.setMessageDeliveryFilter(0);
+        broker2.setMessageDeliveryFilter(1);
         Thread.sleep(100);
         client1.publish("topic1", "My string data1");
 
@@ -96,6 +97,9 @@ class ReplicationTest {
     @DisplayName("Replicated messages are deleted after delivery")
     void test2() throws IOException, InterruptedException {
         client2.subscribe("topic1", "cg1");
+        Thread.sleep(100);
+        broker1.setMessageDeliveryFilter(0);
+        broker2.setMessageDeliveryFilter(1);
         Thread.sleep(100);
         client1.publish("topic1", "My string data1");
 
@@ -143,6 +147,10 @@ class ReplicationTest {
         client4.subscribe("t1", "cg2");
 
         Thread.sleep(100);
+        broker1.setMessageDeliveryFilter(0);
+        broker2.setMessageDeliveryFilter(1);
+        Thread.sleep(100);
+
         assertEquals(1,client1.getConsumedMessages("t1").size());
         assertEquals(1,client4.getConsumedMessages("t1").size());
 
