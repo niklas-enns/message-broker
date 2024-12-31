@@ -53,7 +53,8 @@ graph LR;
         - No manual configuration by admin needed
         - [ ] Topology changes for the distribution cluster
             - [ ] A node gets a first client of a consumer group
-              - [x] Implemented for a first static two-node cluster 
+              - [x] Implemented for a first static two-node cluster
+              - [ ] For testing, there has to be a way to configure DoL manually
             - [ ] A node looses its last client of a consumer group
             - [ ] A new node joins the cluster
             - [ ] A node leaves the cluster
