@@ -169,7 +169,6 @@ public class ReplicationLinks {
                         "WELCOME_TO_THE_HOOD," + this.nodeId + ","
                                 + addresses); //WELCOME_TO_THE_HOOD,<id of welcomer>,<id of other node>,<ip of other node>:<port of other node>
                 this.otherNodes.add(enteringNode);
-                System.out.println(">> WELCOME_TO_THE_HOOD");
                 break;
             case "REORG_DOL":
                 //TODO if this is node is participating in this consumerGroup
@@ -178,10 +177,8 @@ public class ReplicationLinks {
                     var otherNodesRoll = Integer.parseInt(parts[3]);
                     var localRoll = new Random().nextInt();
                     if (localRoll < otherNodesRoll) {
-                        System.out.println("I take message % 2 == 0");
                         messageProcessingFilter.setModuloRemainder(0);
                     } else {
-                        System.out.println("I take message % 2 == 1");
                         messageProcessingFilter.setModuloRemainder(1);
                     }
                     this.sendToReplicationReceivers("REORG_DOL" + "," + "RESPONSE" + "," + cg + "," + localRoll);
@@ -189,10 +186,8 @@ public class ReplicationLinks {
                 if (parts[1].equals("RESPONSE")) {
                     var otherNodesRoll = Integer.parseInt(parts[3]);
                     if (this.localDolRoll < otherNodesRoll) {
-                        System.out.println("I take message % 2 == 0");
                         messageProcessingFilter.setModuloRemainder(0);
                     } else {
-                        System.out.println("I take message % 2 == 1");
                         messageProcessingFilter.setModuloRemainder(1);
                     }
                 }

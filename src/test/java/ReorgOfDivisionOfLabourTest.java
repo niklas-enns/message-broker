@@ -47,8 +47,6 @@ class ReorgOfDivisionOfLabourTest {
                 throw new RuntimeException(e);
             }
         });
-        System.out.println();
-        System.out.println("#########################################");
 
         Thread.sleep(100); // join cluster
         var client2 = new Client(1600, "C2");

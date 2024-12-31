@@ -16,6 +16,7 @@ public class MessageProcessingFilter {
     }
 
     void setModuloRemainder(int moduloRemainder) {
+        logger.info("I will process all messages % {} == {}", COUNT_OF_MESSAGE_DISTRIBUTOR_NODES, moduloRemainder);
         f = (envelope) -> {
             var calc = Math.abs(envelope.hashCode() % COUNT_OF_MESSAGE_DISTRIBUTOR_NODES);
             if (calc == moduloRemainder) {
