@@ -171,31 +171,39 @@ public class ReplicationLinks {
                 this.otherNodes.add(enteringNode);
                 break;
             case "REORG_DOL":
-                //TODO if this is node is participating in this consumerGroup
                 var cg = parts[2];
-                if (parts[1].equals("INIT")) {
-                    var otherNodesRoll = Integer.parseInt(parts[3]);
-                    var localRoll = new Random().nextInt();
-                    if (localRoll < otherNodesRoll) {
-                        messageProcessingFilter.setModuloRemainder(0);
-                    } else {
-                        messageProcessingFilter.setModuloRemainder(1);
+                if (thisNodeIsADistributorFor(cg)) {
+                    if (parts[1].equals("INIT")) {
+                        var otherNodesRoll = Integer.parseInt(parts[3]);
+                        var localRoll = new Random().nextInt();
+                        if (localRoll < otherNodesRoll) {
+                            messageProcessingFilter.setModuloRemainder(0);
+                        } else {
+                            messageProcessingFilter.setModuloRemainder(1);
+                        }
+                        this.sendToReplicationReceivers("REORG_DOL" + "," + "RESPONSE" + "," + cg + "," + localRoll);
                     }
-                    this.sendToReplicationReceivers("REORG_DOL" + "," + "RESPONSE" + "," + cg + "," + localRoll);
-                }
-                if (parts[1].equals("RESPONSE")) {
-                    var otherNodesRoll = Integer.parseInt(parts[3]);
-                    if (this.localDolRoll < otherNodesRoll) {
-                        messageProcessingFilter.setModuloRemainder(0);
-                    } else {
-                        messageProcessingFilter.setModuloRemainder(1);
+                    if (parts[1].equals("RESPONSE")) {
+                        var otherNodesRoll = Integer.parseInt(parts[3]);
+                        if (this.localDolRoll < otherNodesRoll) {
+                            messageProcessingFilter.setModuloRemainder(0);
+                        } else {
+                            messageProcessingFilter.setModuloRemainder(1);
+                        }
                     }
+                } else {
+                    logger.info("Ignoring REORG_DOL, because I'm not a distributor for {}", cg);
                 }
                 break;
             default:
                 logger.warn("", new IllegalArgumentException("Unknown message type in message: " + line));
             }
         }
+    }
+
+    private boolean thisNodeIsADistributorFor(final String consumerGroupName) {
+        var consumerGroup = topics.getConsumerGroupByName(consumerGroupName);
+        return consumerGroup.getClientProxies().stream().anyMatch(cp -> cp.socketToClient() != null);
     }
 
     private void connectToUnconnectedNodes(final String id, final String address) {

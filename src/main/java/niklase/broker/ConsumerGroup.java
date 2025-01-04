@@ -160,4 +160,7 @@ public class ConsumerGroup {
         this.messages.removeIf(m -> m.equals(envelopeToDelete));
     }
 
+    public List<ClientProxy> getClientProxies() {
+        return this.clients;
+    }
 }

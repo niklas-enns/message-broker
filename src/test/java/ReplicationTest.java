@@ -72,14 +72,21 @@ class ReplicationTest {
     @Test
     @DisplayName("Nodes distribute disjoint message sets although all messages are replicated")
     void test1() throws IOException, InterruptedException {
-        client1.subscribe("topic1");
-        client2.subscribe("topic1");
+        client1.subscribe("topic1", "cg1");
+        Thread.sleep(100); // TODO implement concurrent REORG_DOL sessions
+        client2.subscribe("topic1", "cg1");
         Thread.sleep(100);
         for (int i = 0; i < 10; i++) {
             // for some reason, the hashcodes %2 for these generated messages are evenly distributed
             client1.publish("topic1", "My string data " + i);
         }
         Thread.sleep(1000);
+
+        System.out.println("Broker 1:");
+        System.out.println(broker1.getTotalMessageCount() + " messages left");
+        System.out.println("Broker 2:");
+        System.out.println(broker2.getTotalMessageCount() + " messages left");
+
 
         assertEquals(5, client1.getConsumedMessages("topic1").size());
         assertEquals(5, client2.getConsumedMessages("topic1").size());
