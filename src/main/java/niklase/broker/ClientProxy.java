@@ -5,7 +5,7 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ClientProxy {
+public class ClientProxy {
     private static final Logger logger = LoggerFactory.getLogger(ClientProxy.class);
     private String name;
     private Socket socketToClient;
