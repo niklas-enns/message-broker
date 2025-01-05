@@ -37,6 +37,10 @@ class ReorgOfDivisionOfLabourTest {
         assertEquals("My string data 2", client1.getConsumedMessages("topic1").get(1));
         assertEquals("My string data 3", client1.getConsumedMessages("topic1").get(2));
 
+        System.out.println();
+        System.out.println("########################");
+        System.out.println();
+
         var broker2 = new Broker("N2");
         broker2.joinCluster(new InetSocketAddress("localhost", REPLICATION_PORT_BROKER_1));
         broker2.setClusterEntryLocalPort(1601);

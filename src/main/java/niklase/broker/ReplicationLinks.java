@@ -110,7 +110,7 @@ public class ReplicationLinks {
         logger.info("Sending {} to {}", line, otherNodes);
         this.otherNodes.forEach(node -> {
             try {
-                new PrintStream(node.getSocketOfEstablishedReplicationLink().getOutputStream()).println(line);
+                new PrintStream(node.getSocketOfEstablishedReplicationLink().getOutputStream(), true).println(line);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -123,7 +123,7 @@ public class ReplicationLinks {
             MDC.put("nodeId", this.nodeId);
             try (var socketToOtherNode = new Socket();) {
                 socketToOtherNode.connect(clusterEntryAddress);
-                new PrintStream(socketToOtherNode.getOutputStream()).println(
+                new PrintStream(socketToOtherNode.getOutputStream(), true).println(
                         "INFO," + this.nodeId + ",localhost:"
                                 + this.clusterEntryLocalPort); //INFO,<node id>,<cluster entry ip:port>
                 handleIncomingMessages(socketToOtherNode, clusterEntryAddress);
@@ -165,7 +165,7 @@ public class ReplicationLinks {
                         new InetSocketAddress(addressParts[0], Integer.parseInt(addressParts[1])));
 
                 var addresses = getNodes();
-                new PrintStream(socket.getOutputStream()).println(
+                new PrintStream(socket.getOutputStream(), true).println(
                         "WELCOME_TO_THE_HOOD," + this.nodeId + ","
                                 + addresses); //WELCOME_TO_THE_HOOD,<id of welcomer>,<id of other node>,<ip of other node>:<port of other node>
                 this.otherNodes.add(enteringNode);

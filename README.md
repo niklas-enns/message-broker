@@ -142,3 +142,4 @@ delivery of messages.
 * Interfaces on the level of the programming language can be expressed good enough with types and code comments.
     * For replication, network communication gets involved... How and where should this interface be documented?
 * Class Diagrams help to visualize and question dependencies (if classes have meaningful names)
+* Sockets can get into closed state, although it still contains unread data

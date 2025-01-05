@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,7 @@ public class ConsumerGroup {
     private final MessageProcessingFilter messageProcessingFilter;
     private final ReplicationLinks replicationLinks;
     private List<ClientProxy> clients = new LinkedList<>();
+    private final Lock lock = new ReentrantLock();
     private ClientProxy current = null;
 
     private List<String> messages = new LinkedList<>();
@@ -35,8 +38,10 @@ public class ConsumerGroup {
     }
 
     public synchronized void accept(final String envelope) {
-        logger.info("Storing [{}]", envelope);
+        logger.info("Storing [{}], acquiring lock...", envelope);
+        lock.lock();
         messages.add(envelope);
+        lock.unlock();
         this.flush();
     }
 
@@ -56,6 +61,7 @@ public class ConsumerGroup {
         if (clientProxy != null) {
             var socketToClient = clientProxy.socketToClient();
             try {
+                lock.lock();
                 messages.removeIf(envelope -> {
                     if (!this.messageProcessingFilter.shouldBeProcessed(envelope)) {
                         return false;
@@ -66,8 +72,7 @@ public class ConsumerGroup {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    logger.info("<<< >>> forwarded [{}] to [{}@{}]", envelope, clientProxy.getName(),
-                            clientProxy.socketToClient().getPort());
+                    logger.info("<<< >>> forwarded [{}] to {}", envelope, clientProxy.getName());
                     replicationLinks.acceptMessageDeliveryConfirmation(envelope, name);
                     return true;
                 });
@@ -75,6 +80,7 @@ public class ConsumerGroup {
                         this.messages.size());
             } catch (Exception e) {
                 try {
+                    logger.info("ConsumerGroup {} is closing socket, because of ", this.name, e);
                     socketToClient.close();
                 } catch (NullPointerException ex) {
                     logger.info(
@@ -84,6 +90,8 @@ public class ConsumerGroup {
                 } finally {
                     clientProxy.clearSocketToClient(socketToClient);
                 }
+            } finally {
+                lock.unlock();
             }
         } else {
             logger.info("Unable to flush consumergroup {}, because there are no clients with socket", this.name);
@@ -157,7 +165,9 @@ public class ConsumerGroup {
     }
 
     public void delete(final String envelopeToDelete) {
+        lock.lock();
         this.messages.removeIf(m -> m.equals(envelopeToDelete));
+        lock.unlock();
     }
 
     public List<ClientProxy> getClientProxies() {

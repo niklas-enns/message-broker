@@ -11,8 +11,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class ReplicationTest {
+    private static final Logger logger = LoggerFactory.getLogger(ReplicationTest.class);
+
     public static final int CLIENT_PORT_BROKER_1 = 1500;
     public static final int REPLICATION_PORT_BROKER_1 = 1501;
     public static final int CLIENT_PORT_BROKER_2 = 1600;
@@ -80,12 +84,11 @@ class ReplicationTest {
             // for some reason, the hashcodes %2 for these generated messages are evenly distributed
             client1.publish("topic1", "My string data " + i);
         }
+
         Thread.sleep(1000);
 
-        System.out.println("Broker 1:");
-        System.out.println(broker1.getTotalMessageCount() + " messages left");
-        System.out.println("Broker 2:");
-        System.out.println(broker2.getTotalMessageCount() + " messages left");
+        printBrokerState(broker1);
+        printBrokerState(broker2);
 
 
         assertEquals(5, client1.getConsumedMessages("topic1").size());
@@ -94,10 +97,12 @@ class ReplicationTest {
                 client1.getConsumedMessages("topic1"),
                 client2.getConsumedMessages("topic1"))
         );
+    }
 
-        //        replicated messages which should be processed by the other node
-        //        assertEquals(5,broker1.getTotalMessageCount());
-        //        assertEquals(5,broker2.getTotalMessageCount());
+    private void printBrokerState(final Broker broker1) {
+        System.out.println(broker1.getNodeId() + ":");
+        System.out.println(broker1.getTotalMessageCount() + " messages left");
+        System.out.println(broker1.getIncomingMessageCount() + " incoming messages");
     }
 
     @Test

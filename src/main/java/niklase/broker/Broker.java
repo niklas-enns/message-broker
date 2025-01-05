@@ -25,6 +25,7 @@ public class Broker {
     private ReplicationLinks replicationLinks = new ReplicationLinks(messageProcessingFilter);
     private Topics topics = new Topics(replicationLinks,
             new ConsumerGroupFactory(messageProcessingFilter, replicationLinks));
+    private int incomingMessageCounter;
 
     public Broker(final String nodeId) {
         this.nodeId = nodeId;
@@ -99,6 +100,7 @@ public class Broker {
                         new PrintStream(socketWithClient.getOutputStream(), true).println("UNSUB_RESP_OK," + topic);
                         continue;
                     case "MESSAGE":
+                        incomingMessageCounter++;
                         var payload = parts[2];
                         topics.accept(topic, payload);
                         break;
@@ -106,11 +108,12 @@ public class Broker {
                         logger.info("Unsupported message: {}", line);
                     }
                 }
-                logger.info("Stopping shoveling, because socket is closed: {}", socketWithClient.isClosed());
+                logger.info("Stopping shoveling, because socket with {} is closed: {}", clientName, socketWithClient.isClosed());
             } catch (IOException | EndOfStreamException e) {
                 getConsumerGroups().forEach(
                         consumerGroup -> consumerGroup.clearSocket(socketWithClient));
                 try {
+                    logger.info("Broker is closing socket to {}, because of ", clientName, e);
                     socketWithClient.close();
                 } catch (IOException ex) {
                     logger.info("Unable to close socketWithClient", e);
@@ -153,5 +156,13 @@ public class Broker {
 
     public Set<String> getIdsOfAllnodesWithEstablishedReplicationLinks() {
         return replicationLinks.getIdsOfAllNodesWithEstablishedReplicationLinks();
+    }
+
+    public int getIncomingMessageCount() {
+        return this.incomingMessageCounter;
+    }
+
+    public String getNodeId() {
+        return this.nodeId;
     }
 }
