@@ -152,7 +152,7 @@ received every random number of all other nodes. Now, just by sorting the random
     * if you're the single author of a codebase. If multiple persons are working on the same codebase in parallel,
       things might work differently
 * Interfaces on the level of the programming language can be expressed good enough with types and code comments.
-    * For replication, network communication gets involved... How and where should this interface be documented?
+    * When communication over network comes into the game, documentation has to cover additional aspects such as serialization. This is a good reason to stay on a lower level of interfaces and avoid networking at all.
 * Class Diagrams help to visualize and question dependencies (if classes have meaningful names)
 * Sockets can get into closed state, although it still contains unread data
 * In the beginning, something is created in a separate class. As the class grows, we start to extract parts that belong together into other classes which act as collaborators. 
