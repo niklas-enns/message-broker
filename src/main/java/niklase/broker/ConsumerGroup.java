@@ -33,7 +33,7 @@ public class ConsumerGroup {
     public synchronized void addConnectedClient(final ClientProxy clientProxy) {
         this.clients.add(clientProxy);
         if (this.clients.stream().filter(clientProxy1 -> clientProxy1.socketToClient() != null).count() == 1) {
-            replicationLinks.announceWillingnessToDistributeMessagesFor(this.name);
+            replicationLinks.becomeDistributor(this.name);
         }
     }
 
@@ -109,16 +109,16 @@ public class ConsumerGroup {
         }
 
         if (current == null) {
-            current = connectedClients.get(0);
+            current = connectedClients.getFirst();
         } else {
             // 1 client
             if (connectedClients.size() == 1) {
-                current = connectedClients.get(0);
+                current = connectedClients.getFirst();
                 return current;
             }
             // current is at end of list, we have to jump back to index 0
             if (connectedClients.size() == connectedClients.indexOf(current) + 1) {
-                current = connectedClients.get(0);
+                current = connectedClients.getFirst();
                 return current;
             }
 

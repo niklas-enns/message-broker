@@ -95,6 +95,18 @@ N2 will distribute all messages whose hashcode mod 3 is equals to one and N3 dis
 Thus, although all messages are replicated within the cluster, the disjoint distribution to clients prevents multiple
 delivery of messages.
 
+(Idea: use message length instead of hashCode?)
+
+### Automatic (Re)Organization of Devision of Labour
+A `REORG_DOL` session has the goal to create a cluster-wide consensus on the division of labour for message distribution.
+When a session is finished, every node knows which messages it is responsible for. Events that trigger a reorganization are
+* A node gets a first client of a consumer group
+* A node looses its last client of a consumer group
+
+When a node gets a first client of a consumer group, a `REORG_DOL` session will be initiated by sending a random number to all other nodes.
+Every receiver node will reply by sending its own random number to all other nodes. After this short burst of exchange of random numbers, every node
+received every random number of all other nodes. Now, just by sorting the random numbers, every node knows its index within the sorted list of random numbers.  
+
 ## Glossary
 
 * Client
@@ -102,7 +114,7 @@ delivery of messages.
 * Node
     * A process running message broker
 * Topic
-* ConsumerGroup
+* ConsumerGroup (CG)
     * a set of Clients subscribed to a Topic
 
 ## Protocols
@@ -143,3 +155,20 @@ delivery of messages.
     * For replication, network communication gets involved... How and where should this interface be documented?
 * Class Diagrams help to visualize and question dependencies (if classes have meaningful names)
 * Sockets can get into closed state, although it still contains unread data
+* In the beginning, something is created in a separate class. As the class grows, we start to extract parts that belong together into other classes which act as collaborators. 
+  After a few iterations, the amount of code logic the initial class decreases more and more until it becomes a facade whose only purpose is to forward calls to the collaborators. During that transformation, code migrates from one class to another one. Applying the rule "every class should have a corresponding unit-test class" complicates that transformation process, because of continuous adjustments of unit tests. 
+* In the beginning, one layer seems to be a good layer to write tests against. Over time, complexity hidden by the layers interfaces grows silently. Every iteration of development adds a little bit to the interface
+  * The tests become hard to maintain, when too many implementation details leak out of the class 
+  * A common approach is to limit the scope of tests by mocking out other modules
+* Classes grow, because the interface grows
+  * I extended the central `Broker`-class with methods that provide insights into the broker. These methods are not needed for the broker to perform its origin task but to make testing easier. The common approach for (unit) testing is to
+execute the same code that is used in prod - but with defined inputs and asserted outputs. In contrast, the approach I used does not (only) rely on the observable behaviour when the broker performs its original task but performs assertions
+on the internal state of the broker. You could argue that this is some sort of whitebox testing or testing with a dedicated testing interface.
+* A good reason to extend an existing class is that it keeps staying one thing
+  * Splitting it into two things requires a decision - where to cut. It might turn out that the cutting line was a bad one. No one wants to be the person to be blamed for that decision. 
+  * Finding an agreement within a team on the cutting line is not a preferred task.
+  * Decomposition of classes is a structural change and brings a higher probability to cause merge conflicts with other development tasks
+  * After decomposition, multiple people have to learn the new structure (the decomposition invalidates the mental model)
+* A good reason to extend an existing class is
+  * When the class serves as an entry point (Façade) of a module and the interface is extended, the class has to be extended. This extends the width of the interface of the class but not the volume of code that implements the interface. The implementations are delegates.
+* In concurrent scenarios, just looking at the end result is not enough. Verification of the intermediate steps is required, because faulty behavior in the inner might still produce correct results in the end. For now, that's fine but in the future, this might cause unwanted side effects.

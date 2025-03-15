@@ -22,11 +22,11 @@ public class Broker {
     private ServerSocket serverSocketForClients = null;
 
     private MessageProcessingFilter messageProcessingFilter = new MessageProcessingFilter();
+
     private ReplicationLinks replicationLinks = new ReplicationLinks(messageProcessingFilter);
     private Topics topics = new Topics(replicationLinks,
             new ConsumerGroupFactory(messageProcessingFilter, replicationLinks));
     private int incomingMessageCounter;
-
     public Broker(final String nodeId) {
         this.nodeId = nodeId;
         replicationLinks.setNodeId(nodeId);
@@ -134,10 +134,6 @@ public class Broker {
         this.replicationLinks.stop();
     }
 
-    public void hook() {
-        //for debugging purposes
-    }
-
     public void joinCluster(final InetSocketAddress clusterEntryAddress) {
         this.replicationLinks.establishLink(clusterEntryAddress);
     }
@@ -146,23 +142,59 @@ public class Broker {
         this.replicationLinks.setClusterEntryLocalPort(clusterEntryLocalPort);
     }
 
+    /** For testing purposes, a way to configure DOL explicitly
+     * @param moduloRemainder
+     */
     public void setMessageDeliveryFilter(final int moduloRemainder) {
         this.messageProcessingFilter.setModuloRemainder(moduloRemainder);
     }
 
-    public long getTotalMessageCount() {
+    public long getCountOfCurrentlyStoredMessages() {
         return this.getConsumerGroups().stream().mapToLong(ConsumerGroup::getTotalMessageCount).sum();
     }
 
-    public Set<String> getIdsOfAllnodesWithEstablishedReplicationLinks() {
+    public Set<String> getIdsOfAllNodesWithEstablishedReplicationLinks() {
         return replicationLinks.getIdsOfAllNodesWithEstablishedReplicationLinks();
     }
 
+    /**
+     * @return the count of messages that are stored locally
+     */
     public int getIncomingMessageCount() {
         return this.incomingMessageCounter;
     }
 
+    /**
+     * @return true if the broker contains zero messages
+     */
+    public boolean isEmpty() {
+        return this.getCountOfCurrentlyStoredMessages() == 0;
+    }
+
     public String getNodeId() {
         return this.nodeId;
+    }
+
+    public String getMessageDistributionRule() {
+        return this.messageProcessingFilter.getMessageDistributionRule();
+    }
+
+    public void waitForBrokerToAcceptConnections() throws InterruptedException {
+        while (this.serverSocketForClients == null) {
+            Thread.sleep(1);
+        }
+    }
+
+    public void waitForReplicationLinks(final int count) throws InterruptedException {
+        while (this.replicationLinks.getIdsOfAllNodesWithEstablishedReplicationLinks().size() < count) {
+            Thread.sleep(1);
+        }
+    }
+
+    public void waitForTerminationOfFirstReorgDolSession() throws InterruptedException {
+        while (this.getMessageDistributionRule().equals("all")) {
+            System.out.println("Waiting 10ms for initial REORG_DOL session");
+            Thread.sleep(10);
+        }
     }
 }

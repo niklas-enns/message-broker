@@ -8,10 +8,15 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -27,7 +32,10 @@ public class ReplicationLinks {
     private List<Node> otherNodes = new LinkedList<>();
     private Topics topics;
     private String nodeId;
+
     private int localDolRoll;
+    private List<Integer> otherNodesRolls = new LinkedList<>();
+    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     public ReplicationLinks(final MessageProcessingFilter messageProcessingFilter) {
         this.messageProcessingFilter = messageProcessingFilter;
@@ -121,7 +129,7 @@ public class ReplicationLinks {
         logger.info("Establishing replication link to {}", clusterEntryAddress);
         Thread.ofVirtual().start(() -> {
             MDC.put("nodeId", this.nodeId);
-            try (var socketToOtherNode = new Socket();) {
+            try (var socketToOtherNode = new Socket()) {
                 socketToOtherNode.connect(clusterEntryAddress);
                 new PrintStream(socketToOtherNode.getOutputStream(), true).println(
                         "INFO," + this.nodeId + ",localhost:"
@@ -171,34 +179,35 @@ public class ReplicationLinks {
                 this.otherNodes.add(enteringNode);
                 break;
             case "REORG_DOL":
-                var cg = parts[2];
-                if (thisNodeIsADistributorFor(cg)) {
+                var consumerGroupName = parts[2];
+                if (thisNodeIsADistributorFor(consumerGroupName)) {
                     if (parts[1].equals("INIT")) {
                         var otherNodesRoll = Integer.parseInt(parts[3]);
-                        var localRoll = new Random().nextInt();
-                        if (localRoll < otherNodesRoll) {
-                            messageProcessingFilter.setModuloRemainder(0);
-                        } else {
-                            messageProcessingFilter.setModuloRemainder(1);
-                        }
-                        this.sendToReplicationReceivers("REORG_DOL" + "," + "RESPONSE" + "," + cg + "," + localRoll);
+                        this.localDolRoll = new Random().nextInt();
+                        this.otherNodesRolls.clear();
+                        addToOtherNodesRolls(otherNodesRoll);
+                        this.sendToReplicationReceivers("REORG_DOL" + "," + "RESPONSE" + "," + consumerGroupName + "," + this.localDolRoll);
+                        logger.info("After receiving REORG_DOL,INIT, Now waiting 50ms for other nodes to join the group of distributors for ConsumerGroup {}",
+                                consumerGroupName);
+                        determineForWhichMessagesThisNodeIsResponsibleFor();
                     }
-                    if (parts[1].equals("RESPONSE")) {
+                    if (parts[1].equals("RESPONSE")) { //TODO for a three-node cluster, a node will receive multiple RESPONSE, therefore, calling clear() on every RESPONSE would discard previous RESPONSE messages
+                        this.otherNodesRolls.clear();
                         var otherNodesRoll = Integer.parseInt(parts[3]);
-                        if (this.localDolRoll < otherNodesRoll) {
-                            messageProcessingFilter.setModuloRemainder(0);
-                        } else {
-                            messageProcessingFilter.setModuloRemainder(1);
-                        }
+                        addToOtherNodesRolls(otherNodesRoll);
                     }
                 } else {
-                    logger.info("Ignoring REORG_DOL, because I'm not a distributor for {}", cg);
+                    logger.info("Ignoring REORG_DOL, because I'm not a distributor for {}", consumerGroupName);
                 }
                 break;
             default:
                 logger.warn("", new IllegalArgumentException("Unknown message type in message: " + line));
             }
         }
+    }
+
+    private synchronized void addToOtherNodesRolls(final int otherNodesRoll) {
+        this.otherNodesRolls.add(otherNodesRoll);
     }
 
     private boolean thisNodeIsADistributorFor(final String consumerGroupName) {
@@ -226,8 +235,32 @@ public class ReplicationLinks {
         this.nodeId = nodeId;
     }
 
-    public void announceWillingnessToDistributeMessagesFor(final String consumerGroupName) {
+    public void becomeDistributor(final String consumerGroupName) {
         this.localDolRoll = new Random().nextInt();
         sendToReplicationReceivers("REORG_DOL," + "INIT" + "," + consumerGroupName + "," + this.localDolRoll);
+        logger.info("Now waiting 50ms for other nodes to join the group of distributors for ConsumerGroup {}",
+                consumerGroupName);
+        determineForWhichMessagesThisNodeIsResponsibleFor();
+    }
+
+    private void determineForWhichMessagesThisNodeIsResponsibleFor() {
+        Runnable task = () -> {
+            if (!this.otherNodesRolls.isEmpty()) {
+                MDC.put("nodeId", this.nodeId);
+                var indexOfLocalDolRoll = indexOf(this.otherNodesRolls, this.localDolRoll);
+                messageProcessingFilter.setModuloRemainder(indexOfLocalDolRoll);
+            }
+        };
+        executor.schedule(task, 50, TimeUnit.MILLISECONDS);
+    }
+
+    //public for unit-testability
+    public static int indexOf(final List<Integer> otherNodesRolls, final int localDolRoll) {
+        logger.info("Determining the index of the local roll {} within the rolls of the other nodes: {}", localDolRoll,
+                otherNodesRolls);
+        var allRolls = new ArrayList<>(otherNodesRolls);
+        allRolls.add(localDolRoll);
+        Collections.sort(allRolls);
+        return allRolls.indexOf(localDolRoll);
     }
 }

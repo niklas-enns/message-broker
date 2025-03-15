@@ -7,16 +7,18 @@ import org.slf4j.LoggerFactory;
 
 public class MessageProcessingFilter {
     private static final Logger logger = LoggerFactory.getLogger(MessageProcessingFilter.class);
-    public static final int COUNT_OF_MESSAGE_DISTRIBUTOR_NODES = 2;
+    public static final int COUNT_OF_MESSAGE_DISTRIBUTOR_NODES = 2; //TODO make this dynamic
 
     Function<String, Boolean> f = (envelope) -> true; //default process all messages
+    private String messageDistributionRule = "all";
 
     boolean shouldBeProcessed(String envelope) {
         return f.apply(envelope);
     }
 
     void setModuloRemainder(int moduloRemainder) {
-        logger.info("I will process all messages % {} == {}", COUNT_OF_MESSAGE_DISTRIBUTOR_NODES, moduloRemainder);
+        messageDistributionRule = "All messages % " + COUNT_OF_MESSAGE_DISTRIBUTOR_NODES + " == " + moduloRemainder;
+        logger.info("I will process " + messageDistributionRule);
         f = (envelope) -> {
             var calc = Math.abs(envelope.hashCode() % COUNT_OF_MESSAGE_DISTRIBUTOR_NODES);
             if (calc == moduloRemainder) {
@@ -29,4 +31,9 @@ public class MessageProcessingFilter {
             return false;
         };
     }
+
+    public String getMessageDistributionRule() {
+        return this.messageDistributionRule;
+    }
+
 }
