@@ -12,4 +12,12 @@ public class TestUtil {
             }
         });
     }
+
+    public static void printBrokerState(final Broker broker1) {
+        System.out.println(broker1.getNodeId() + ":");
+        System.out.println(broker1.getCountOfCurrentlyStoredMessages() + " messages left");
+        System.out.println(broker1.getIncomingMessageCount() + " incoming messages");
+        System.out.println("Message distribution rules:  " + broker1.getMessageDistributionRules());
+    }
+
 }

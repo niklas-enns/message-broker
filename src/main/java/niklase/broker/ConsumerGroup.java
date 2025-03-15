@@ -173,4 +173,8 @@ public class ConsumerGroup {
     public List<ClientProxy> getClientProxies() {
         return this.clients;
     }
+
+    public MessageProcessingFilter getMessageProcessingFilter() {
+        return this.messageProcessingFilter;
+    }
 }

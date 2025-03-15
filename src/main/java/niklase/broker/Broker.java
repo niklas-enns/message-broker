@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +22,9 @@ public class Broker {
 
     private ServerSocket serverSocketForClients = null;
 
-    private MessageProcessingFilter messageProcessingFilter = new MessageProcessingFilter();
-
-    private ReplicationLinks replicationLinks = new ReplicationLinks(messageProcessingFilter);
+    private ReplicationLinks replicationLinks = new ReplicationLinks();
     private Topics topics = new Topics(replicationLinks,
-            new ConsumerGroupFactory(messageProcessingFilter, replicationLinks));
+            new ConsumerGroupFactory(replicationLinks));
     private int incomingMessageCounter;
     public Broker(final String nodeId) {
         this.nodeId = nodeId;
@@ -142,11 +141,16 @@ public class Broker {
         this.replicationLinks.setClusterEntryLocalPort(clusterEntryLocalPort);
     }
 
-    /** For testing purposes, a way to configure DOL explicitly
+    /**
+     * For testing purposes, a way to configure DOL explicitly
+     *
      * @param moduloRemainder
+     * @param countOfDistributorNodes
+     * @param consumerGroupName
      */
-    public void setMessageDeliveryFilter(final int moduloRemainder) {
-        this.messageProcessingFilter.setModuloRemainder(moduloRemainder);
+    public void setMessageDeliveryFilter(final int moduloRemainder, final int countOfDistributorNodes,
+            final String consumerGroupName) {
+        this.topics.getConsumerGroupByName(consumerGroupName).getMessageProcessingFilter().setModuloRemainder(moduloRemainder, countOfDistributorNodes);
     }
 
     public long getCountOfCurrentlyStoredMessages() {
@@ -175,8 +179,8 @@ public class Broker {
         return this.nodeId;
     }
 
-    public String getMessageDistributionRule() {
-        return this.messageProcessingFilter.getMessageDistributionRule();
+    public String getMessageDistributionRule(final String consumerGroupName) {
+        return this.topics.getConsumerGroupByName(consumerGroupName).getMessageProcessingFilter().getMessageDistributionRule();
     }
 
     public void waitForBrokerToAcceptConnections() throws InterruptedException {
@@ -191,10 +195,16 @@ public class Broker {
         }
     }
 
-    public void waitForTerminationOfFirstReorgDolSession() throws InterruptedException {
-        while (this.getMessageDistributionRule().equals("all")) {
+    public void waitForTerminationOfFirstReorgDolSession(final String consumerGroupName) throws InterruptedException {
+        while (this.getMessageDistributionRule(consumerGroupName).equals("all")) {
             System.out.println("Waiting 10ms for initial REORG_DOL session");
             Thread.sleep(10);
         }
+    }
+
+    public String getMessageDistributionRules() {
+        return this.topics.getAllConsumerGroups().stream()
+                .map(cg -> cg.getName() + ": " + cg.getMessageProcessingFilter().getMessageDistributionRule()).collect(
+                        Collectors.joining(","));
     }
 }

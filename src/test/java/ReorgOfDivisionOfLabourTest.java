@@ -1,9 +1,9 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.List;
 
 import niklase.broker.Broker;
 import niklase.client.Client;
@@ -45,11 +45,11 @@ class ReorgOfDivisionOfLabourTest {
 
         var client2 = new Client(1600, "C2");
         client2.subscribe("topic1", "cg1");
-        broker2.waitForTerminationOfFirstReorgDolSession();
+        broker2.waitForTerminationOfFirstReorgDolSession("cg1");
 
         // configure DOL explicitly to be able to make assertions on the delivery
-        broker1.setMessageDeliveryFilter(1);
-        broker2.setMessageDeliveryFilter(0);
+        broker1.setMessageDeliveryFilter(1, 2, "cg1");
+        broker2.setMessageDeliveryFilter(0, 2, "cg1");
         client1.deleteConsumedMessages();
 
         client1.publish("topic1", "My string data 1");
@@ -65,10 +65,14 @@ class ReorgOfDivisionOfLabourTest {
         client1.deleteConsumedMessages();
 
         // add a third distributor node for CG
+        System.out.println("======== 3 ======");
         var broker3 = new Broker("N3");
         broker3.joinCluster(new InetSocketAddress("localhost", REPLICATION_PORT_BROKER_1));
         broker3.setClusterEntryLocalPort(1701);
         TestUtil.startInNewThread(broker3, 1700);
+        Thread.sleep(100);
+        var client3 = new Client(1700, "C3");
+        client3.subscribe("topic1", "cg1");
 
         Thread.sleep(100);
 
@@ -83,9 +87,19 @@ class ReorgOfDivisionOfLabourTest {
         assertTrue(broker3.getIdsOfAllNodesWithEstablishedReplicationLinks().contains("N2"));
 
         // Assert negotiated division of labour
-        assertNotEquals(broker1.getMessageDistributionRule(), broker2.getMessageDistributionRule());
-        assertNotEquals(broker2.getMessageDistributionRule(), broker3.getMessageDistributionRule());
-        assertNotEquals(broker3.getMessageDistributionRule(), broker1.getMessageDistributionRule());
+        var allCurrentlyAggreedMessageDistributionRules = List.of(
+                broker1.getMessageDistributionRule("cg1"),
+                broker2.getMessageDistributionRule("cg1"),
+                broker3.getMessageDistributionRule("cg1")
+        );
+
+        assertTrue(allCurrentlyAggreedMessageDistributionRules.contains("All messages % 3 == 0"));
+        assertTrue(allCurrentlyAggreedMessageDistributionRules.contains("All messages % 3 == 1"));
+        assertTrue(allCurrentlyAggreedMessageDistributionRules.contains("All messages % 3 == 2"));
+
+        TestUtil.printBrokerState(broker1);
+        TestUtil.printBrokerState(broker2);
+        TestUtil.printBrokerState(broker3);
 
         broker1.stop();
         broker2.stop();

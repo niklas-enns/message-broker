@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class ConsumerGroupTest {
     private MessageProcessingFilter messageProcessingFilter = new MessageProcessingFilter();
-    private ReplicationLinks replicationLinks = new ReplicationLinks(messageProcessingFilter);
+    private ReplicationLinks replicationLinks = new ReplicationLinks();
 
     @Test
     @DisplayName("No clients")

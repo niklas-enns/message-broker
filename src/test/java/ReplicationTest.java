@@ -11,8 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 class ReplicationTest {
 
@@ -51,9 +49,6 @@ class ReplicationTest {
     void test0() throws IOException, InterruptedException {
         client2.subscribe("topic1");
         Thread.sleep(100);
-        broker1.setMessageDeliveryFilter(0);
-        broker2.setMessageDeliveryFilter(1);
-        Thread.sleep(100);
         client1.publish("topic1", "My string data1");
 
         Thread.sleep(100);
@@ -66,8 +61,8 @@ class ReplicationTest {
         client1.subscribe("topic1", "cg1");
         Thread.sleep(100); // TODO implement concurrent REORG_DOL sessions
         client2.subscribe("topic1", "cg1");
-        broker1.waitForTerminationOfFirstReorgDolSession();
-        broker2.waitForTerminationOfFirstReorgDolSession();
+        broker1.waitForTerminationOfFirstReorgDolSession("cg1");
+        broker2.waitForTerminationOfFirstReorgDolSession("cg1");
         Thread.sleep(10);
         for (int i = 0; i < 10; i++) {
             // for some reason, the hashcodes %2 for these generated messages are evenly distributed
@@ -76,14 +71,14 @@ class ReplicationTest {
 
         Thread.sleep(100);
 
-        printBrokerState(broker1);
-        printBrokerState(broker2);
+        TestUtil.printBrokerState(broker1);
+        TestUtil.printBrokerState(broker2);
 
         assertEquals(5, client1.getConsumedMessages("topic1").size());
         assertEquals(5, client2.getConsumedMessages("topic1").size());
 
         // assert message distribution rules are different
-        assertNotEquals(broker1.getMessageDistributionRule(), broker2.getMessageDistributionRule());
+        assertNotEquals(broker1.getMessageDistributionRule("cg1"), broker2.getMessageDistributionRule("cg1"));
 
         assertTrue(Collections.disjoint(
                 client1.getConsumedMessages("topic1"),
@@ -91,20 +86,14 @@ class ReplicationTest {
         );
     }
 
-    private void printBrokerState(final Broker broker1) {
-        System.out.println(broker1.getNodeId() + ":");
-        System.out.println(broker1.getCountOfCurrentlyStoredMessages() + " messages left");
-        System.out.println(broker1.getIncomingMessageCount() + " incoming messages");
-        System.out.println("Message distribution rule:  " + broker1.getMessageDistributionRule());
-    }
 
     @Test
     @DisplayName("Replicated messages are deleted after delivery")
     void test2() throws IOException, InterruptedException {
         client2.subscribe("topic1", "cg1");
         Thread.sleep(100);
-        broker1.setMessageDeliveryFilter(0);
-        broker2.setMessageDeliveryFilter(1);
+        broker1.setMessageDeliveryFilter(0, 2, "cg1");
+        broker2.setMessageDeliveryFilter(1, 2, "cg1");
         Thread.sleep(100);
         client1.publish("topic1", "My string data1");
 
@@ -143,7 +132,7 @@ class ReplicationTest {
         client3.publish("t1", "My string data1");
 
         // assert message has been replicated to broker 2
-        Thread.sleep(100);
+        Thread.sleep(200);
         assertEquals(2, broker2.getCountOfCurrentlyStoredMessages()); // message is stored twice. one for each cg
         assertEquals(2, broker1.getCountOfCurrentlyStoredMessages());
 
@@ -152,8 +141,8 @@ class ReplicationTest {
         client4.subscribe("t1", "cg2");
 
         Thread.sleep(100);
-        broker1.setMessageDeliveryFilter(0);
-        broker2.setMessageDeliveryFilter(1);
+        broker1.setMessageDeliveryFilter(0, 2, "cg1");
+        broker2.setMessageDeliveryFilter(1, 2, "cg1");
         Thread.sleep(100);
 
         assertEquals(1, client1.getConsumedMessages("t1").size());

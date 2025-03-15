@@ -25,8 +25,6 @@ import org.slf4j.MDC;
 
 public class ReplicationLinks {
     private static final Logger logger = LoggerFactory.getLogger(ReplicationLinks.class);
-    private final MessageProcessingFilter messageProcessingFilter;
-
     private int clusterEntryLocalPort;
     private ServerSocket replicationLinkServerSocket;
     private List<Node> otherNodes = new LinkedList<>();
@@ -37,8 +35,7 @@ public class ReplicationLinks {
     private List<Integer> otherNodesRolls = new LinkedList<>();
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-    public ReplicationLinks(final MessageProcessingFilter messageProcessingFilter) {
-        this.messageProcessingFilter = messageProcessingFilter;
+    public ReplicationLinks() {
     }
 
     public void startAcceptingIncomingReplicationLinkConnections(final Topics topics) {
@@ -189,10 +186,10 @@ public class ReplicationLinks {
                         this.sendToReplicationReceivers("REORG_DOL" + "," + "RESPONSE" + "," + consumerGroupName + "," + this.localDolRoll);
                         logger.info("After receiving REORG_DOL,INIT, Now waiting 50ms for other nodes to join the group of distributors for ConsumerGroup {}",
                                 consumerGroupName);
-                        determineForWhichMessagesThisNodeIsResponsibleFor();
+                        determineForWhichMessagesThisNodeIsResponsibleFor(consumerGroupName);
                     }
-                    if (parts[1].equals("RESPONSE")) { //TODO for a three-node cluster, a node will receive multiple RESPONSE, therefore, calling clear() on every RESPONSE would discard previous RESPONSE messages
-                        this.otherNodesRolls.clear();
+                    if (parts[1].equals("RESPONSE")) {
+                        //this.otherNodesRolls.clear(); //TODO clearing for generations use generation clock??
                         var otherNodesRoll = Integer.parseInt(parts[3]);
                         addToOtherNodesRolls(otherNodesRoll);
                     }
@@ -240,18 +237,18 @@ public class ReplicationLinks {
         sendToReplicationReceivers("REORG_DOL," + "INIT" + "," + consumerGroupName + "," + this.localDolRoll);
         logger.info("Now waiting 50ms for other nodes to join the group of distributors for ConsumerGroup {}",
                 consumerGroupName);
-        determineForWhichMessagesThisNodeIsResponsibleFor();
+        determineForWhichMessagesThisNodeIsResponsibleFor(consumerGroupName);
     }
 
-    private void determineForWhichMessagesThisNodeIsResponsibleFor() {
+    private void determineForWhichMessagesThisNodeIsResponsibleFor(final String consumerGroupName) {
         Runnable task = () -> {
             if (!this.otherNodesRolls.isEmpty()) {
                 MDC.put("nodeId", this.nodeId);
                 var indexOfLocalDolRoll = indexOf(this.otherNodesRolls, this.localDolRoll);
-                messageProcessingFilter.setModuloRemainder(indexOfLocalDolRoll);
+                topics.getConsumerGroupByName(consumerGroupName).getMessageProcessingFilter().setModuloRemainder(indexOfLocalDolRoll, this.otherNodesRolls.size() + 1);
             }
         };
-        executor.schedule(task, 50, TimeUnit.MILLISECONDS);
+        executor.schedule(task, 100, TimeUnit.MILLISECONDS);
     }
 
     //public for unit-testability

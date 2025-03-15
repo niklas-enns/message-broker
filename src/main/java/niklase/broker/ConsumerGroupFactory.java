@@ -1,18 +1,14 @@
 package niklase.broker;
 
 public class ConsumerGroupFactory {
-    private final MessageProcessingFilter messageProcessingFilter;
     private final ReplicationLinks replicationLinks;
 
-    public ConsumerGroupFactory(final MessageProcessingFilter messageProcessingFilter,
-            final ReplicationLinks replicationLinks) {
-
-        this.messageProcessingFilter = messageProcessingFilter;
+    public ConsumerGroupFactory(final ReplicationLinks replicationLinks) {
         this.replicationLinks = replicationLinks;
     }
 
     public ConsumerGroup create(final String consumerGroupName) {
-        var consumerGroup = new ConsumerGroup(consumerGroupName, messageProcessingFilter, replicationLinks);
+        var consumerGroup = new ConsumerGroup(consumerGroupName, new MessageProcessingFilter(), replicationLinks);
         return consumerGroup;
     }
 }

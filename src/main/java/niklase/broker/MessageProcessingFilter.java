@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 public class MessageProcessingFilter {
     private static final Logger logger = LoggerFactory.getLogger(MessageProcessingFilter.class);
-    public static final int COUNT_OF_MESSAGE_DISTRIBUTOR_NODES = 2; //TODO make this dynamic
+    private int countOfDistributorNodes = 1;
 
     Function<String, Boolean> f = (envelope) -> true; //default process all messages
     private String messageDistributionRule = "all";
@@ -16,11 +16,12 @@ public class MessageProcessingFilter {
         return f.apply(envelope);
     }
 
-    void setModuloRemainder(int moduloRemainder) {
-        messageDistributionRule = "All messages % " + COUNT_OF_MESSAGE_DISTRIBUTOR_NODES + " == " + moduloRemainder;
+    void setModuloRemainder(int moduloRemainder, final int countOfDistributorNodes) {
+        this.countOfDistributorNodes = countOfDistributorNodes;
+        messageDistributionRule = "All messages % " + this.countOfDistributorNodes + " == " + moduloRemainder;
         logger.info("I will process " + messageDistributionRule);
         f = (envelope) -> {
-            var calc = Math.abs(envelope.hashCode() % COUNT_OF_MESSAGE_DISTRIBUTOR_NODES);
+            var calc = Math.abs(envelope.hashCode() % this.countOfDistributorNodes);
             if (calc == moduloRemainder) {
                 logger.info("Processing message {} with hashCode % 2 = {} and configured moduloRemainder {}", envelope,
                         calc, moduloRemainder);
