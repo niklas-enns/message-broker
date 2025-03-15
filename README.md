@@ -157,7 +157,7 @@ received every random number of all other nodes. Now, just by sorting the random
 * Sockets can get into closed state, although it still contains unread data
 * In the beginning, something is created in a separate class. As the class grows, we start to extract parts that belong together into other classes which act as collaborators. 
   After a few iterations, the amount of code logic the initial class decreases more and more until it becomes a facade whose only purpose is to forward calls to the collaborators. During that transformation, code migrates from one class to another one. Applying the rule "every class should have a corresponding unit-test class" complicates that transformation process, because of continuous adjustments of unit tests. 
-* In the beginning, one layer seems to be a good layer to write tests against. Over time, complexity hidden by the layers interfaces grows silently. Every iteration of development adds a little bit to the interface
+* In the beginning, one layer seems to be a good layer to write tests against. Over time, complexity hidden by the layers interface grows silently. Every iteration of development adds a little bit to the interface
   * The tests become hard to maintain, when too many implementation details leak out of the class 
   * A common approach is to limit the scope of tests by mocking out other modules
 * Classes grow, because the interface grows
