@@ -189,7 +189,6 @@ public class ReplicationLinks {
                         determineForWhichMessagesThisNodeIsResponsibleFor(consumerGroupName);
                     }
                     if (parts[1].equals("RESPONSE")) {
-                        //this.otherNodesRolls.clear(); //TODO clearing for generations use generation clock??
                         var otherNodesRoll = Integer.parseInt(parts[3]);
                         addToOtherNodesRolls(otherNodesRoll);
                     }
@@ -234,6 +233,7 @@ public class ReplicationLinks {
 
     public void becomeDistributor(final String consumerGroupName) {
         this.localDolRoll = new Random().nextInt();
+        this.otherNodesRolls.clear();
         sendToReplicationReceivers("REORG_DOL," + "INIT" + "," + consumerGroupName + "," + this.localDolRoll);
         logger.info("Now waiting 50ms for other nodes to join the group of distributors for ConsumerGroup {}",
                 consumerGroupName);
