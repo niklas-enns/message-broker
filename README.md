@@ -51,13 +51,14 @@ graph LR;
             - [x] Delivered messages are deleted cluster-wide
     - [ ] Cluster organizes the division of labour automatically
         - No manual configuration by admin needed
-        - [ ] Topology changes for the distribution cluster
+        - [x] Topology changes for the distribution cluster
             - [ ] A node gets a first client of a consumer group
               - [x] Implemented for a first static two-node cluster
               - [x] For testing, there has to be a way to configure DoL manually
             - [ ] A node looses its last client of a consumer group
-            - [ ] A new node joins the cluster
+            - [x] A new node joins the cluster
             - [ ] A node leaves the cluster
+        - [ ] Concurrency control for `REORG_DOL` sessions (currently, parallel `REORG_DOL` sessions can lead to undefined behaviour)
     - [ ] Scenario: (On failure) clients connect to any node and message processing continues
         - [x] Subscription requests (consumer group to topic) have to be replicated
         - [ ] Subscription requests (client to consumer group) have to be replicated for recognition on connect
