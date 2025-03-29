@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -27,7 +28,7 @@ public class ReplicationLinks {
     private static final Logger logger = LoggerFactory.getLogger(ReplicationLinks.class);
     private int clusterEntryLocalPort;
     private ServerSocket replicationLinkServerSocket;
-    private List<Node> otherNodes = new LinkedList<>();
+    private Set<Node> otherNodes = new HashSet<>();
     private Topics topics;
     private String nodeId;
 
@@ -72,10 +73,13 @@ public class ReplicationLinks {
         });
     }
 
-    private String getNodes() {
+    private String getOtherNodesAsString(final Node exception) {
         var string = "";
         for (final Node otherNode : this.otherNodes) {
-            string += otherNode.id + "," + otherNode.getAddressForNewReplicationLinks() + ",";
+            if (!otherNode.id.equals(exception.id)) {
+                string += otherNode.id + "," + otherNode.getAddressForNewReplicationLinks() + ",";
+            }
+
         }
         return string;
     }
@@ -169,7 +173,7 @@ public class ReplicationLinks {
                 var enteringNode = new Node(parts[1], socket,
                         new InetSocketAddress(addressParts[0], Integer.parseInt(addressParts[1])));
 
-                var addresses = getNodes();
+                var addresses = getOtherNodesAsString(enteringNode);
                 new PrintStream(socket.getOutputStream(), true).println(
                         "WELCOME_TO_THE_HOOD," + this.nodeId + ","
                                 + addresses); //WELCOME_TO_THE_HOOD,<id of welcomer>,<id of other node>,<ip of other node>:<port of other node>
