@@ -46,7 +46,7 @@ class ReplicationTest {
 
     @Test
     @DisplayName("Client receives a message via replication")
-    void test0() throws IOException, InterruptedException {
+    void test0() throws IOException, InterruptedException { //this test is flaky now, because DOL decides whether
         client2.subscribe("topic1");
         Thread.sleep(100);
         client1.publish("topic1", "My string data1");

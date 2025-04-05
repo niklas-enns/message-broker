@@ -173,3 +173,8 @@ on the internal state of the broker. You could argue that this is some sort of w
 * A good reason to extend an existing class is
   * When the class serves as an entry point (Façade) of a module and the interface is extended, the class has to be extended. This extends the width of the interface of the class but not the volume of code that implements the interface. The implementations are delegates.
 * In concurrent scenarios, just looking at the end result is not enough. Verification of the intermediate steps is required, because faulty behavior in the inner might still produce correct results in the end. For now, that's fine but in the future, this might cause unwanted side effects.
+
+## Observability
+How to get state data from the broker into a GUI? Approaches:
+1) JavaFX
+2) Sidecar with HTTP/Websocket Server and GUI which receives stats via the broker protocol

@@ -210,9 +210,14 @@ public class ReplicationLinks {
         this.otherNodesRolls.add(otherNodesRoll);
     }
 
+    /**
+     *
+     * @param consumerGroupName
+     * @return true when this node has at least one client subscription to the consumerGroup. It doesn't matter whether the client is connected or not.
+     */
     private boolean thisNodeIsADistributorFor(final String consumerGroupName) {
         var consumerGroup = topics.getConsumerGroupByName(consumerGroupName);
-        return consumerGroup.getClientProxies().stream().anyMatch(cp -> cp.socketToClient() != null);
+        return !consumerGroup.getClientProxies().isEmpty();
     }
 
     private void connectToUnconnectedNodes(final String id, final String address) {

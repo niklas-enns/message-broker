@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import niklase.broker.EndOfStreamException;
 import org.slf4j.Logger;
@@ -17,8 +18,10 @@ public class Client {
     private final String name;
     private Logger logger;
     private Socket socketToBroker;
-    private final MessageStore consumedMessages = new MessageStore();
+    private final MessageStore messageStore = new MessageStore();
     private final List<String> subscribedTopics = new LinkedList<>();
+    private Consumer<String> statsCallBack = (string) -> {
+    };
 
     public Client(final int port, String name) throws IOException {
         this.name = name;
@@ -50,15 +53,19 @@ public class Client {
                     switch (parts[0]) {
                     case "SUB_RESP_OK":
                         this.subscribedTopics.add(parts[1]);
-                        this.consumedMessages.init(parts[1]);
+                        this.messageStore.init(parts[1]);
                         continue;
                     case "UNSUB_RESP_OK":
                         this.subscribedTopics.remove(parts[1]);
                         continue;
                     case "MESSAGE":
-                        this.consumedMessages.add(parts[1], parts[2]);
+                        this.messageStore.add(parts[1], parts[2]);
                         continue;
+                    case "STATS":
+                        this.statsCallBack.accept(line.substring(line.indexOf(",")+1));
+                        break;
                     default:
+                        logger.warn("Unknown message: {}", parts);
 
                     }
                 } catch (IOException | EndOfStreamException e) {
@@ -81,7 +88,7 @@ public class Client {
     }
 
     public List<String> getConsumedMessages(final String topic) {
-        return this.consumedMessages.get(topic);
+        return this.messageStore.get(topic);
     }
 
     public void subscribe(final String topic) throws IOException, InterruptedException {
@@ -125,6 +132,11 @@ public class Client {
     }
 
     public void deleteConsumedMessages() {
-        consumedMessages.deleteAllMessages();
+        messageStore.deleteAllMessages();
+    }
+
+    public void subscribeToBrokerStats(Consumer<String> callBack) throws IOException {
+        send("SUB_REQ_STATS,TODO");
+        this.statsCallBack = callBack;
     }
 }

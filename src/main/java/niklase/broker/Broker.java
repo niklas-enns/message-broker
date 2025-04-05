@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ public class Broker {
     private Topics topics = new Topics(replicationLinks,
             new ConsumerGroupFactory(replicationLinks));
     private int incomingMessageCounter;
+
     public Broker(final String nodeId) {
         this.nodeId = nodeId;
         replicationLinks.setNodeId(nodeId);
@@ -74,7 +76,6 @@ public class Broker {
                     case "HI_MY_NAME_IS":
                         clientName = parts[1];
                         final String finalClientName = clientName;
-                        //TODO is it better to have another access to clientsProxies?
                         getConsumerGroups().forEach(
                                 consumerGroup -> consumerGroup.setSocket(finalClientName, socketWithClient));
                         break;
@@ -87,8 +88,7 @@ public class Broker {
                         topics.subscribeConsumerGroupToTopic(topic, consumerGroupName);
                         topics.getConsumerGroupByName(consumerGroupName)
                                 .addConnectedClient(new ClientProxy(clientName, socketWithClient));
-                        new PrintStream(socketWithClient.getOutputStream(), true).println(
-                                "SUB_RESP_OK," + topic + "," + consumerGroupName);
+                        send("SUB_RESP_OK," + topic + "," + consumerGroupName + topic, socketWithClient);
                         topics.flush(consumerGroupName); // if the topic already contains messages
                         break;
                     case "UNSUB_REQ":
@@ -96,18 +96,39 @@ public class Broker {
                         topics.getConsumerGroupsSubscribedTo(parts[1])
                                 .forEach(consumerGroup -> consumerGroup.removeClientProxy(finalClientName1));
                         topics.tidy(parts[1]);
-                        new PrintStream(socketWithClient.getOutputStream(), true).println("UNSUB_RESP_OK," + topic);
+                        send("UNSUB_RESP_OK," + topic, socketWithClient);
                         continue;
                     case "MESSAGE":
                         incomingMessageCounter++;
                         var payload = parts[2];
                         topics.accept(topic, payload);
                         break;
+                    case "SUB_REQ_STATS":
+                        final List<String> messages = List.of(
+                                "STATS,NODE_ID," + this.nodeId,
+                                "STATS,COUNT_CURRENTLY_STORED_MESSAGES," + this.getCountOfCurrentlyStoredMessages(),
+                                "STATS,COUNT_RECEIVED_MESSAGES," + this.incomingMessageCounter,
+                                "STATS,COUNT_TOPICS," + this.topics.getAllConsumerGroups().size(),
+                                "STATS,MESSAGE_DISTRIBUTION_RULES," + this.getMessageDistributionRules(),
+                                "STATS,ESTABLISHED_REPLICATION_LINKS," + this.getIdsOfAllNodesWithEstablishedReplicationLinks()
+                        );
+
+                        messages.forEach(m -> {
+                            try {
+                                send(m, socketWithClient);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+
+
+                        break;
                     default:
-                        logger.info("Unsupported message: {}", line);
+                        logger.info("Unsupported message: XXX {}", line);
                     }
                 }
-                logger.info("Stopping shoveling, because socket with {} is closed: {}", clientName, socketWithClient.isClosed());
+                logger.info("Stopping shoveling, because socket with {} is closed: {}", clientName,
+                        socketWithClient.isClosed());
             } catch (IOException | EndOfStreamException e) {
                 getConsumerGroups().forEach(
                         consumerGroup -> consumerGroup.clearSocket(socketWithClient));
@@ -120,7 +141,10 @@ public class Broker {
                 logger.info("Handler for {} stopped, because", clientName, e);
             }
         });
+    }
 
+    private void send(final String text, final Socket socket) throws IOException {
+        new PrintStream(socket.getOutputStream(), true).println(text);
     }
 
     private Set<ConsumerGroup> getConsumerGroups() {
@@ -150,7 +174,8 @@ public class Broker {
      */
     public void setMessageDeliveryFilter(final int moduloRemainder, final int countOfDistributorNodes,
             final String consumerGroupName) {
-        this.topics.getConsumerGroupByName(consumerGroupName).getMessageProcessingFilter().setModuloRemainder(moduloRemainder, countOfDistributorNodes);
+        this.topics.getConsumerGroupByName(consumerGroupName).getMessageProcessingFilter()
+                .setModuloRemainder(moduloRemainder, countOfDistributorNodes);
     }
 
     public long getCountOfCurrentlyStoredMessages() {
@@ -180,7 +205,8 @@ public class Broker {
     }
 
     public String getMessageDistributionRule(final String consumerGroupName) {
-        return this.topics.getConsumerGroupByName(consumerGroupName).getMessageProcessingFilter().getMessageDistributionRule();
+        return this.topics.getConsumerGroupByName(consumerGroupName).getMessageProcessingFilter()
+                .getMessageDistributionRule();
     }
 
     public void waitForBrokerToAcceptConnections() throws InterruptedException {

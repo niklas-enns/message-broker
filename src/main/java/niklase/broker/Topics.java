@@ -65,7 +65,6 @@ public class Topics {
     }
 
     public void deleteMessage(String topicName, String consumerGroup, final String message) {
-        //TODO handle case topic does not exist
         this.getConsumerGroupByName(consumerGroup).delete("MESSAGE," + topicName + "," + message);
     }
 
