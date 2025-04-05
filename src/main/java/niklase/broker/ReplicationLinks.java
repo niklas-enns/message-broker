@@ -213,7 +213,8 @@ public class ReplicationLinks {
     /**
      *
      * @param consumerGroupName
-     * @return true when this node has at least one client subscription to the consumerGroup. It doesn't matter whether the client is connected or not.
+     * @return true when this node has at least one client subscription to the consumerGroup.
+     * It doesn't matter whether the client is connected or not.
      */
     private boolean thisNodeIsADistributorFor(final String consumerGroupName) {
         var consumerGroup = topics.getConsumerGroupByName(consumerGroupName);
