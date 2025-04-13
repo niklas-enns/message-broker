@@ -81,11 +81,7 @@ particular case, it sacrifices the consistency of the message _ordering_.
 
 ## Division of Labour
 
-When all nodes would deliver all messages to all of their clients, a message that gets submitted to the cluster, would
-be
-delivered multiple times, because all messages are replicated within the cluster. As messages should be delivered (
-ideally)
-exactly once within a consumer group, a new question arises: which messages should a node deliver to its clients?
+With replication, messages are copied to all nodes within the cluster. But only a single one of these nodes should deliver a message to a client. Therefore, some kind of logic is needed to clarify which node should distribute which messages to clients.
 
 Based on modular hashing, every node is able to determine if it should distribute a message or not. For example,
 in a cluster with three distributor nodes, node N1 will be responsible for distributing all messages whose hashcode mod
