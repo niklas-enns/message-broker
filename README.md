@@ -74,7 +74,7 @@ graph LR;
 ## Leaderless Replication
 For better availability, messages are replicated within a cluster. In contrast to common implementations, this is not based on a leader node which controls the replication but it is more like a peer-to-peer architecture where all nodes accept messages and replicate them to each other.
 
-## Division of Labour
+## Division of Labour (DoL)
 With replication, messages are copied to all nodes within the cluster. But only a single one of these nodes should deliver a message to a client. Therefore, some kind of logic is needed to clarify which node should distribute which messages to clients.
 
 Based on modular hashing of the message itself, every node is able to determine if it should distribute a message or not. For example,
@@ -88,24 +88,32 @@ Thus, although all messages are replicated within the cluster, the delivery to c
 (Idea: use message length instead of hashCode?)
 
 ### Automatic (Re)Organization of Devision of Labour
-A `REORG_DOL` session has the goal to create a cluster-wide consensus on the division of labour for message distribution.
-When a session is finished, every node knows which messages it is responsible for. Events that trigger a reorganization are
-* A node gets a first client of a consumer group
-* A node looses its last client of a consumer group
+When a node becomes a distributor of a CG, the DoL has to be negotiated again.
+This process is called a `REORG_DOL` session. When a session is finished, every node knows which messages it is responsible for. Events that trigger a reorganization are
+* A node gets a first client of a consumer group = becomes a distributor 
+* A node looses its last client of a consumer group = stops being a distributor
 
 When a node gets a first client of a consumer group, a `REORG_DOL` session will be initiated by sending a random number to all other nodes.
-Every receiver node will reply by sending its own random number to all other nodes. After this short burst of exchange of random numbers, every node
-received every random number of all other nodes. Now, just by sorting the random numbers, every node knows its index within the sorted list of random numbers.  
+Every receiver node will reply by sending its own random number to all other nodes. After this short burst of exchange of random numbers, every node received every random number of all other nodes. Now, just by sorting the random numbers, every node knows its index within the sorted list of random numbers.
 
 ## Glossary
 
 * Client
-    * Publishes or consumes messages
+    * Can consume or publish messages
+    * Can subscribe itself to a consumer group 
+    * Can assign consumer groups to topics
 * Node
     * A process running message broker
+    * Can join a cluster and establish replication links
 * Topic
 * ConsumerGroup (CG)
-    * a set of Clients subscribed to a Topic
+    * a set of Clients subscribed to a Topic 
+* Message Distribution
+    * Used in the context of sending messages from nodes to clients. Not used in the context of replication.
+* Subscription
+    * A clients communicates its interest in a topic by subscribing to a consumer group.
+* ...
+    * A consumer group is assigned to one topic
 
 ## Protocols
 
