@@ -72,25 +72,18 @@ graph LR;
 # Concepts
 
 ## Leaderless Replication
-
-Leaderless replication means, there is no central instance which decides or coordinates the data replication.
-It's much more like a peer-to-peer architecture where all nodes accept incoming data from clients and replicate that
-data
-to other nodes. This increases the flexibility of a cluster. In general, this leads to a lower consistency. In this
-particular case, it sacrifices the consistency of the message _ordering_.
+For better availability, messages are replicated within a cluster. In contrast to common implementations, this is not based on a leader node which controls the replication but it is more like a peer-to-peer architecture where all nodes accept messages from clients and replicate them to each other.
 
 ## Division of Labour
-
 With replication, messages are copied to all nodes within the cluster. But only a single one of these nodes should deliver a message to a client. Therefore, some kind of logic is needed to clarify which node should distribute which messages to clients.
 
-Based on modular hashing, every node is able to determine if it should distribute a message or not. For example,
+Based on modular hashing of the message itself, every node is able to determine if it should distribute a message or not. For example,
 in a cluster with three distributor nodes, node N1 will be responsible for distributing all messages whose hashcode mod
-3 is equals to zero.
+3 is equal to zero.
 N2 will distribute all messages whose hashcode mod 3 is equals to one and N3 distributes the messages whose hashcode mod
 3 equals two.
 
-Thus, although all messages are replicated within the cluster, the disjoint distribution to clients prevents multiple
-delivery of messages.
+Thus, although all messages are replicated within the cluster, the delivery to clients happens only once.
 
 (Idea: use message length instead of hashCode?)
 
