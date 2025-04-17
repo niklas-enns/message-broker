@@ -110,7 +110,7 @@ Every receiver node will reply by sending its own random number to all other nod
 
 ## Protocols
 
-### Client --> Node
+### Client <-> Node
 
 | Message Type  | Description                                                                      |
 |---------------|----------------------------------------------------------------------------------|
