@@ -119,7 +119,7 @@ Every receiver node will reply by sending its own random number to all other nod
 | UNSUB_REQ     | Inverse operation of SUB_REQ                                                     |
 | MESSAGE       | A message published by a client                                                  |
 
-### Node --> Node
+### Node --> Node (Replication Link)
 
 | Message Type                    | Description                                                                                                                                        |
 |---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
