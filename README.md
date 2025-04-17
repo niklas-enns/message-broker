@@ -114,6 +114,8 @@ Every receiver node will reply by sending its own random number to all other nod
     * A clients communicates its interest in a topic by subscribing to a consumer group.
 * ...
     * A consumer group is assigned to one topic
+* Replication Link
+    * Bi-directional communication channel between nodes.
 
 ## Protocols
 
