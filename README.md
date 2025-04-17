@@ -98,24 +98,15 @@ Every receiver node will reply by sending its own random number to all other nod
 
 ## Glossary
 
-* Client
-    * Can consume or publish messages
-    * Can subscribe itself to a consumer group 
-    * Can assign consumer groups to topics
-* Node
-    * A process running message broker
-    * Can join a cluster and establish replication links
-* Topic
-* ConsumerGroup (CG)
-    * a set of Clients subscribed to a Topic 
-* Message Distribution
-    * Used in the context of sending messages from nodes to clients. Not used in the context of replication.
-* Subscription
-    * A clients communicates its interest in a topic by subscribing to a consumer group.
-* ...
-    * A consumer group is assigned to one topic
-* Replication Link
-    * Bi-directional communication channel between nodes.
+| Term          | Description                                                                      |
+|---------------|----------------------------------------------------------------------------------|
+| Client        | Can consume or publish messages, subscribe itself to a consumer group, assign consumer groups to topics |
+| Node          | A process running message broker, can join a cluster and establish replication links |
+| Topic         |                                                                                  |
+| ConsumerGroup (CG) | a set of Clients subscribed to a Topic                                      |
+| Message Distribution | Used in the context of sending messages from nodes to clients. Not used in the context of replication. |
+| Subscription | A clients communicates its interest in a topic by subscribing to a consumer group. |
+| Replication Link | Bi-directional communication channel between nodes.                           |
 
 ## Protocols
 
