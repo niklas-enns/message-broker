@@ -110,7 +110,6 @@ Thus, although all messages are replicated within the cluster, the delivery to c
 ```mermaid
 graph LR;
     N1[Node 1]==>|m1,m2,m3,m4|N2[Node 2]
-    N1==>|m1,m2,m3,m4|N2
     N1==>|m1,m2,m3,m4|N3[Node 3]
     
     C1((Client 1))-->|m1,m2,m3,m4|N1;
