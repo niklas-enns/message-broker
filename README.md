@@ -19,7 +19,7 @@ graph LR;
     C4((Client 4))<-->|Messages|N2;
     N3[Node 3]
     
-    classDef c1 fill:#205781;
+    classDef c1 fill:#205781,color:white;
     class N1 c1
 ```
 
