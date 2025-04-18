@@ -29,53 +29,6 @@ graph LR;
 
 ## Feature Backlog
 
-- [x] Topics
-- [x] Consumer Groups
-- [x] In-memory message queueing
-    - After connecting, clients will receive messages of their subscriptions that arrived while the clients were
-      disconnected
-- [x] Cancel Subscriptions
-
-## Quality Backlog
-
-- [x] Introduce logging Library
-- [x] Unit-Test ConsumerGroup.getNextClientProxyWithSocket
-- [ ] HA via Leaderless Replication of Messages and Load Balancing
-    - This drops strict ordering, because each node will construct its own message order
-    - [x] Replication of all messages to all nodes
-        - Config v1 (~~links are uni directional, every node has to know every node via config params~~)
-            - [x] Nodes know about each other via IP:PORT config parameters
-                - [x] On startup, nodes send replication requests to each other
-        - Config v2
-            - [x] Bidirectional links
-            - [ ] Topology changes during runtime
-                - [x] Nodes can join the cluster by connecting to any cluster node
-                    - [x] it gets a list of all known nodes and establishes replication links
-                    - [ ] Ensure a high consistency of cluster state
-        - [x] Message Replication
-            - [x] When a consumer group receives a message, it will be forwarded to replication receivers
-            - [x] The replication receiver feeds all messages into its own replicated consumer groups
-            - [x] Delivered messages are deleted cluster-wide
-    - [ ] Cluster organizes the division of labour automatically
-        - No manual configuration by admin needed
-        - [x] Topology changes for the distribution cluster
-            - [ ] A node gets a first client of a consumer group
-              - [x] Implemented for a first static two-node cluster
-              - [x] For testing, there has to be a way to configure DoL manually
-            - [ ] A node looses its last client of a consumer group
-            - [x] A new node joins the cluster
-            - [ ] A node leaves the cluster
-        - [ ] Concurrency control for `REORG_DOL` sessions (currently, parallel `REORG_DOL` sessions can lead to undefined behaviour)
-    - [ ] Scenario: (On failure) clients connect to any node and message processing continues
-        - [x] Subscription requests (consumer group to topic) have to be replicated
-        - [ ] Subscription requests (client to consumer group) have to be replicated for recognition on connect
-        - [ ] Unsubscribe requests (client to consumer group) have to be replicated
-
-## Limitations
-
-* Message order is preserved only roughly
-* No persistence
-
 # Concepts
 
 ## Leaderless Replication
@@ -208,3 +161,52 @@ on the internal state of the broker. You could argue that this is some sort of w
 How to get state data from the broker into a GUI? Approaches:
 1) JavaFX
 2) Sidecar with HTTP/Websocket Server and GUI which receives stats via the broker protocol
+
+
+
+- [x] Topics
+- [x] Consumer Groups
+- [x] In-memory message queueing
+    - After connecting, clients will receive messages of their subscriptions that arrived while the clients were
+      disconnected
+- [x] Cancel Subscriptions
+
+## Quality Backlog
+
+- [x] Introduce logging Library
+- [x] Unit-Test ConsumerGroup.getNextClientProxyWithSocket
+- [ ] HA via Leaderless Replication of Messages and Load Balancing
+    - This drops strict ordering, because each node will construct its own message order
+    - [x] Replication of all messages to all nodes
+        - Config v1 (~~links are uni directional, every node has to know every node via config params~~)
+            - [x] Nodes know about each other via IP:PORT config parameters
+                - [x] On startup, nodes send replication requests to each other
+        - Config v2
+            - [x] Bidirectional links
+            - [ ] Topology changes during runtime
+                - [x] Nodes can join the cluster by connecting to any cluster node
+                    - [x] it gets a list of all known nodes and establishes replication links
+                    - [ ] Ensure a high consistency of cluster state
+        - [x] Message Replication
+            - [x] When a consumer group receives a message, it will be forwarded to replication receivers
+            - [x] The replication receiver feeds all messages into its own replicated consumer groups
+            - [x] Delivered messages are deleted cluster-wide
+    - [ ] Cluster organizes the division of labour automatically
+        - No manual configuration by admin needed
+        - [x] Topology changes for the distribution cluster
+            - [ ] A node gets a first client of a consumer group
+                - [x] Implemented for a first static two-node cluster
+                - [x] For testing, there has to be a way to configure DoL manually
+            - [ ] A node looses its last client of a consumer group
+            - [x] A new node joins the cluster
+            - [ ] A node leaves the cluster
+        - [ ] Concurrency control for `REORG_DOL` sessions (currently, parallel `REORG_DOL` sessions can lead to undefined behaviour)
+    - [ ] Scenario: (On failure) clients connect to any node and message processing continues
+        - [x] Subscription requests (consumer group to topic) have to be replicated
+        - [ ] Subscription requests (client to consumer group) have to be replicated for recognition on connect
+        - [ ] Unsubscribe requests (client to consumer group) have to be replicated
+
+## Limitations
+
+* Message order is preserved only roughly
+* No persistence
