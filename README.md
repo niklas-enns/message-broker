@@ -114,7 +114,7 @@ graph LR;
     
     C1((Client 1))-->|m1,m2,m3,m4|N1;
     N2-->|m1,m2,m3,m4|C2((Client 2));
-    N2-->|m1,m2,m3,m4|C2((Client 2));
+    N3-->|m1,m2,m3,m4|C3((Client 3));
     
     classDef c1 fill:#205781,color:white;
     classDef c2 fill:#4F959D,color:white;
