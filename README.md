@@ -27,8 +27,6 @@ graph LR;
     class C1,C2,C3,C4 c3
 ```
 
-## Feature Backlog
-
 # Concepts
 
 ## Leaderless Replication
@@ -162,7 +160,7 @@ How to get state data from the broker into a GUI? Approaches:
 1) JavaFX
 2) Sidecar with HTTP/Websocket Server and GUI which receives stats via the broker protocol
 
-
+## Feature Backlog
 
 - [x] Topics
 - [x] Consumer Groups
