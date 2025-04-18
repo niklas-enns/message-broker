@@ -20,7 +20,7 @@ graph LR;
     N3[Node 3]
     
     classDef green fill:#9f6,stroke:#333,stroke-width:2px;
-    class node green   
+    class node green
 ```
 
 ```mermaid
