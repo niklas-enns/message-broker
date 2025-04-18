@@ -89,7 +89,7 @@ graph LR;
     N2==>|message|N3
     
     C1((Client 1))-->|message|N1;
-    C2((Client 2))-->|message|N2;
+    C2((Client 2))-->|message|N3;
     
     classDef c1 fill:#205781,color:white;
     classDef c2 fill:#4F959D,color:white;
