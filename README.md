@@ -10,7 +10,7 @@ This message broker can
 
 ```mermaid
 graph LR;
-    N1[Node 1]<==>|Replication Link|N2[Node 2]
+    node(N1[Node 1])<==>|Replication Link|node(N2[Node 2])
     N1[Node 1]==>|Replication Link|N3[Node 3]
     N2==>|Replication Link|N3
     C1((Client 1))<-->|Messages|N1;
@@ -18,7 +18,15 @@ graph LR;
     C3((Client 3))<-->|Messages|N2;
     C4((Client 4))<-->|Messages|N2;
     N3[Node 3]
+    
+    classDef c1 fill:#091057;
+    classDef c2 fill:#024CAA;
+    classDef c3 fill:#EC8305;
+    classDef c4 fill:#DBD3D3;
+    class node c1     
 ```
+
+
 
 ## Feature Backlog
 
@@ -98,15 +106,15 @@ Every receiver node will reply by sending its own random number to all other nod
 
 ## Glossary
 
-| Term                 | Description                                                                                             |
-|----------------------|---------------------------------------------------------------------------------------------------------|
-| Client               | Can consume or publish messages, subscribe itself to a consumer group, assign consumer groups to topics |
-| Node                 | A process running message broker, can join a cluster and establish replication links                    |
-| Topic                |                                                                                                         |
-| ConsumerGroup (CG)   | a set of Clients subscribed to a Topic                                                                  |
-| Message Distribution | Used in the context of sending messages from nodes to clients. Not used in the context of replication.  |
-| Subscription         | A clients communicates its interest in a topic by subscribing to a consumer group.                      |
-| Replication Link     | Bi-directional communication channel between nodes.                                                     |
+| Term                 | Description                                                                                                                 |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| Client               | Can </br>-  Consume or publish messages </br>- Subscribe itself to a consumer group </br>- Assign consumer groups to topics |
+| Node                 | A process running message broker, can join a cluster and establish replication links                                        |
+| Topic                |                                                                                                                             |
+| ConsumerGroup (CG)   | a set of Clients subscribed to a Topic                                                                                      |
+| Message Distribution | Used in the context of sending messages from nodes to clients. Not used in the context of replication.                      |
+| Subscription         | A clients communicates its interest in a topic by subscribing to a consumer group.                                          |
+| Replication Link     | Bi-directional communication channel between nodes.                                                                         |
 
 ## Protocols
 
