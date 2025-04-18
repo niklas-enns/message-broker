@@ -109,12 +109,12 @@ Thus, although all messages are replicated within the cluster, the delivery to c
 
 ```mermaid
 graph LR;
-    N1[Node 1]==>|m1,m2,m3,m4|N2[Node 2]
-    N1==>|m1,m2,m3,m4|N3[Node 3]
+    N1[Node 1]==>|🍋,🥕,🍓,🥬|N2[Node 2]
+    N1==>|🍋,🥕,🍓,🥬|N3[Node 3]
     
-    C1((Client 1))-->|🍏,m2,m3,m4|N1;
-    N2-->|m1,m3|C2((Client 2));
-    N3-->|m2,m4|C3((Client 3));
+    C1((Client 1))-->|🍋,🥕,🍓,🥬|N1;
+    N2-->|🍋,🍓|C2((Client 2));
+    N3-->|🥕,🥬|C3((Client 3));
     
     classDef c1 fill:#205781,color:white;
     classDef c2 fill:#4F959D,color:white;
