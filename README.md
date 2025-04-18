@@ -20,7 +20,6 @@ graph LR;
     N3[Node 3]
     
     classDef green fill:#9f6,stroke:#333,stroke-width:2px;
-    classDef c1 fill:#091057;
     class node green   
 ```
 
