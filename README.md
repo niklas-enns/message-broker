@@ -81,6 +81,19 @@ graph LR;
 ## Leaderless Replication
 For better availability, messages are replicated within a cluster. In contrast to common implementations, this is not based on a leader node which controls the replication but it is more like a peer-to-peer architecture where all nodes accept messages and replicate them to each other.
 
+```mermaid
+graph LR;
+    N1[Node 1]==>|message|N2[Node 2]
+    C1((Client 1))-->|message|N1;
+    
+    classDef c1 fill:#205781,color:white;
+    classDef c2 fill:#4F959D,color:white;
+    classDef c3 fill:#98D2C0;
+    classDef c4 fill:#F6F8D5;
+    class N1,N2,N3 c1
+    class C1,C2,C3,C4 c3
+```
+
 ## Division of Labour (DoL)
 With replication, messages are copied to all nodes within the cluster. But only a single one of these nodes should deliver a message to a client. Therefore, some kind of logic is needed to clarify which node should distribute which messages to clients.
 
