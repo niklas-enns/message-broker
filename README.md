@@ -116,11 +116,11 @@ Every receiver node will reply by sending its own random number to all other nod
 
 | Message Type                    | Description                                                                                                                                        |
 |---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| INFO                            | A new node introduces itself by telling its node id and its address for incoming Replication Links                                                 |
+| WELCOME_TO_THE_HOOD             | Is sent from a cluster entry node to a new member. Contains a list of all cluster nodes and their network addresses for incoming Replication Links |
 | DELIVERED                       | Confirms that a message has been delivered to any client of a ConsumerGroup. (The receiver should delete the message locally)                      |
 | REPLICATED_MESSAGE              | A MESSAGE that is replicated via the Replication Link                                                                                              |
 | REPLICATED_SUBSCRIPTION_REQUEST | A SUB_REQ that is replicated via the Replication Link                                                                                              |
-| WELCOME_TO_THE_HOOD             | Is sent from a cluster entry node to a new member. Contains a list of all cluster nodes and their network addresses for incoming Replication Links |
-| INFO                            | A new node introduces itself by telling its node id and its address for incoming Replication Links                                                 |
 
 # Lessons Learned
 
