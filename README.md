@@ -112,7 +112,7 @@ graph LR;
     N1[Node 1]==>|m1,m2,m3,m4|N2[Node 2]
     N1==>|m1,m2,m3,m4|N3[Node 3]
     
-    C1((Client 1))-->|m1,m2,m3,m4|N1;
+    C1((Client 1))-->|🍏,m2,m3,m4|N1;
     N2-->|m1,m3|C2((Client 2));
     N3-->|m2,m4|C3((Client 3));
     
