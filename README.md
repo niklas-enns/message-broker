@@ -20,7 +20,11 @@ graph LR;
     N3[Node 3]
     
     classDef c1 fill:#205781,color:white;
-    class N1 c1
+    classDef c2 fill:#4F959D,color:white;
+    classDef c3 fill:#98D2C0;
+    classDef c4 fill:#F6F8D5;
+    class N1,N2,N3 c1
+    class C1,C2,C3,C4 c2
 ```
 
 ```mermaid
