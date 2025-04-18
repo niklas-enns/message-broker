@@ -84,6 +84,7 @@ For better availability, messages are replicated within a cluster. In contrast t
 ```mermaid
 graph LR;
     N1[Node 1]==>|message|N2[Node 2]
+    N1==>|message|N3[Node 3]
     C1((Client 1))-->|message|N1;
     
     classDef c1 fill:#205781,color:white;
