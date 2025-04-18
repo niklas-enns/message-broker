@@ -107,6 +107,25 @@ N2 will distribute all messages whose hashcode mod 3 is equals to one and N3 dis
 
 Thus, although all messages are replicated within the cluster, the delivery to clients happens only once.
 
+```mermaid
+graph LR;
+    N1[Node 1]==>|m1,m2,m3,m4|N2[Node 2]
+    N1==>|m1,m2,m3,m4|N2
+    N1==>|m1,m2,m3,m4|N3[Node 3]
+    
+    C1((Client 1))-->|m1,m2,m3,m4|N1;
+    N2-->|m1,m2,m3,m4|C2((Client 2));
+    N2-->|m1,m2,m3,m4|C2((Client 2));
+    
+    classDef c1 fill:#205781,color:white;
+    classDef c2 fill:#4F959D,color:white;
+    classDef c3 fill:#98D2C0;
+    classDef c4 fill:#F6F8D5;
+    class N1,N2,N3 c1
+    class C1,C2,C3,C4 c3
+```
+
+
 (Idea: use message length instead of hashCode?)
 
 ### Automatic (Re)Organization of Devision of Labour
