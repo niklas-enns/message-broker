@@ -21,9 +21,6 @@ graph LR;
     
     classDef green fill:#9f6,stroke:#333,stroke-width:2px;
     classDef c1 fill:#091057;
-    classDef c2 fill:#024CAA;
-    classDef c3 fill:#EC8305;
-    classDef c4 fill:#DBD3D3;
     class node green   
 ```
 
