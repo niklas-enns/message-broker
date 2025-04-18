@@ -24,7 +24,7 @@ graph LR;
     classDef c3 fill:#98D2C0;
     classDef c4 fill:#F6F8D5;
     class N1,N2,N3 c1
-    class C1,C2,C3,C4 c2
+    class C1,C2,C3,C4 c3
 ```
 
 ```mermaid
