@@ -99,6 +99,16 @@ Every receiver node will reply by sending its own random number to all other nod
 of random numbers, every node received every random number of all other nodes. Now, just by sorting the random numbers,
 every node knows its index within the sorted list of random numbers.
 
+```mermaid
+sequenceDiagram
+    N1->>N2: REORG_DOL,INIT,<random number N1>
+    N1->>N3: REORG_DOL,INIT,<random number N1>
+    N2->>N1: REORG_DOL,RESPONSE,<random number N2>
+    N2->>N3: REORG_DOL,RESPONSE,<random number N2>
+    N3->>N1: REORG_DOL,RESPONSE,<random number N3>
+    N3->>N2: REORG_DOL,RESPONSE,<random number N3>
+```
+
 ## Glossary
 
 | Term                 | Description                                                                                                                 |
