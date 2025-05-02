@@ -108,7 +108,10 @@ public class Broker {
                                 "STATS,NODE_ID," + this.nodeId,
                                 "STATS,COUNT_CURRENTLY_STORED_MESSAGES," + this.getCountOfCurrentlyStoredMessages(),
                                 "STATS,COUNT_RECEIVED_MESSAGES," + this.incomingMessageCounter,
+                                "STATS,COUNT_DISTRIBUTED_MESSAGES," + this.getCountOfDistributedMessages(),
                                 "STATS,COUNT_TOPICS," + this.topics.getAllConsumerGroups().size(),
+                                "STATS,CONSUMER_GROUPS," + this.topics.getAllConsumerGroups().stream().map(
+                                        ConsumerGroup::getName).toList(),
                                 "STATS,MESSAGE_DISTRIBUTION_RULES," + this.getMessageDistributionRules(),
                                 "STATS,ESTABLISHED_REPLICATION_LINKS," + this.getIdsOfAllNodesWithEstablishedReplicationLinks()
                         );
@@ -141,6 +144,10 @@ public class Broker {
                 logger.info("Handler for {} stopped, because", clientName, e);
             }
         });
+    }
+
+    private long getCountOfDistributedMessages() {
+        return this.getConsumerGroups().stream().mapToLong(ConsumerGroup::getDistributedMessagesCount).sum();
     }
 
     private void send(final String text, final Socket socket) throws IOException {

@@ -53,7 +53,6 @@ public class Client {
                     switch (parts[0]) {
                     case "SUB_RESP_OK":
                         this.subscribedTopics.add(parts[1]);
-                        this.messageStore.init(parts[1]);
                         continue;
                     case "UNSUB_RESP_OK":
                         this.subscribedTopics.remove(parts[1]);

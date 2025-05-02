@@ -20,6 +20,7 @@ public class ConsumerGroup {
     private List<ClientProxy> clients = new LinkedList<>();
     private final Lock lock = new ReentrantLock();
     private ClientProxy current = null;
+    private long distributedMessagesCount = 0;
 
     private List<String> messages = new LinkedList<>();
 
@@ -74,6 +75,7 @@ public class ConsumerGroup {
                     }
                     logger.info("<<< >>> forwarded [{}] to {}", envelope, clientProxy.getName());
                     replicationLinks.acceptMessageDeliveryConfirmation(envelope, name);
+                    distributedMessagesCount++;
                     return true;
                 });
                 logger.info("Flushing {} finished without Exceptions. {} message(s) are left", clientProxy.getName(),
@@ -176,5 +178,9 @@ public class ConsumerGroup {
 
     public MessageProcessingFilter getMessageProcessingFilter() {
         return this.messageProcessingFilter;
+    }
+
+    public long getDistributedMessagesCount() {
+        return distributedMessagesCount;
     }
 }
