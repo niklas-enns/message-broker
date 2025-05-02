@@ -109,6 +109,17 @@ sequenceDiagram
     N3->>N2: REORG_DOL,RESPONSE,<random number N3>
 ```
 
+## Threads, Socket and Processing
+
+| Thread # | Tasks                                                                                                            |
+|----------|------------------------------------------------------------------------------------------------------------------|
+| 1        | Start #2, create #4x for each client                                                                             |
+| 2        | Open socket for incoming replication links, create #2x for each replication link                                 |
+| 2x       | Handle incoming messages on a replication link, eventually start #3 when a cluster entry node presents new nodes |
+| 3        | Establish a replication link and handle incoming messages                                                        |
+| 4x       | Process all kind of client messages                                                                              |
+
+
 ## Glossary
 
 | Term                 | Description                                                                                                                 |
