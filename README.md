@@ -236,7 +236,7 @@ How to get state data from the broker into a GUI? Approaches:
                 - [x] On startup, nodes send replication requests to each other
         - Config v2
             - [x] Bidirectional links
-            - [ ] Topology changes during runtime
+            - [x] Topology changes during runtime
                 - [x] Nodes can join the cluster by connecting to any cluster node
                     - [x] it gets a list of all known nodes and establishes replication links
                     - [ ] Ensure a high consistency of cluster state
@@ -244,10 +244,10 @@ How to get state data from the broker into a GUI? Approaches:
             - [x] When a consumer group receives a message, it will be forwarded to replication receivers
             - [x] The replication receiver feeds all messages into its own replicated consumer groups
             - [x] Delivered messages are deleted cluster-wide
-    - [ ] Cluster organizes the division of labour automatically
+    - [x] Cluster organizes the division of labour automatically
         - No manual configuration by admin needed
         - [x] Topology changes for the distribution cluster
-            - [ ] A node gets a first client of a consumer group
+            - [x] A node gets a first client of a consumer group
                 - [x] Implemented for a first static two-node cluster
                 - [x] For testing, there has to be a way to configure DoL manually
             - [ ] A node looses its last client of a consumer group
